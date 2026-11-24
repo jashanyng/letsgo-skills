@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: stepping doit"
+  short_description: "显式授权智能体执行当前步骤"
+policy:
+  allow_implicit_invocation: false

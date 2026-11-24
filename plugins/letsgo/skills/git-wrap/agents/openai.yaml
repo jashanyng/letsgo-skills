@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: git wrap"
+  short_description: "显式对涉及的所有仓库执行英文提交、向源分支安全合并、推送及工作树与临时分支清理"
+policy:
+  allow_implicit_invocation: false

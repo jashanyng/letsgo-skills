@@ -1,0 +1,19 @@
+{
+  "name": "letsgo-skills",
+  "owner": {
+    "name": "pcfprio"
+  },
+  "description": "pcfprio 的技能市场。",
+  "plugins": [
+    {
+      "name": "letsgo",
+      "description": "pcfprio 的自建技能集合。",
+      "source": {
+        "source": "git-subdir",
+        "url": "git@github.com:pcfprio/letsgo-skills.git",
+        "path": "plugins/letsgo",
+        "ref": "v3.6.0"
+      }
+    }
+  ]
+}

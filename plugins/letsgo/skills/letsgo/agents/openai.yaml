@@ -1,0 +1,6 @@
+interface:
+  display_name: "letsgo"
+  short_description: "letsgo 基础规则、共用规则与私人资料"
+
+policy:
+  allow_implicit_invocation: true

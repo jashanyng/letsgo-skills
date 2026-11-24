@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: stepping finish"
+  short_description: "显式完成会话范围内全部剩余工作"
+policy:
+  allow_implicit_invocation: false

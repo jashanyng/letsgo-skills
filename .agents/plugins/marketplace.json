@@ -1,0 +1,22 @@
+{
+  "name": "letsgo-skills",
+  "interface": {
+    "displayName": "letsgo-skills"
+  },
+  "plugins": [
+    {
+      "name": "letsgo",
+      "source": {
+        "source": "git-subdir",
+        "url": "git@github.com:pcfprio/letsgo-skills.git",
+        "path": "./plugins/letsgo",
+        "ref": "v3.6.0"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

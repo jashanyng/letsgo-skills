@@ -1,0 +1,23 @@
+# 3.6.0 技能增删与调整
+
+废除 [ADR-0024](0024-matt-guide-skill.md)；修订 [ADR-0017](0017-minimal-plugin.md)、[ADR-0020](0020-matt-flow-skill.md)、[ADR-0022](0022-swarm-up-skill.md) 与 [ADR-0025](0025-git-wrap-skill.md) 中关于插件技能列表、数量与多智能体协同行为的部分。
+
+2026-11-24 决定对 `letsgo` 插件进行五项调整，插件技能由 9 个增至 10 个（隐式技能 `letsgo` + 显式技能 `stepping-begin`、`stepping-doit`、`stepping-finish`、`write-an-article`、`matt-flow`、`prove-it`、`skill-walk`、`try-swarm`、`git-wrap`），发布为 3.6.0：
+
+- **移除 `matt-guide`（废除 [ADR-0024](0024-matt-guide-skill.md)）**：`matt-guide` 仅针对 `mattpocock-skills` 提供显式接力提示词，职责范围过窄，且与新增的通用引导技能 `skill-walk` 重叠。删除 `plugins/letsgo/skills/matt-guide/`，`matt-flow` 恢复为唯一的 `mattpocock-skills` 自动串联入口，`plugins/letsgo/skills/letsgo/references/matt-route.md` 回归仅供 `matt-flow` 读取。
+- **新增显式技能 `prove-it`（验证修改）**：`name: "letsgo:prove-it"`，菜单显示 `letsgo: prove it`（`disable-model-invocation: true`、`allow_implicit_invocation: false`）。仅在用户显式调用时，综合改动范围与影响面、改动风险、项目既有测试基础设施及平台技术栈特性，沿“静态检查 → 单元测试 → 组件或快照测试 → 集成测试 → 端到端自动化 → 真实环境手动验收 → 预发或内测 → 灰度上线加监控”光谱现场评估适合的测试验收层度与方法，输出 **A. 推荐 / B. 轻量 / C. 深度** 三个具体测试组合供用户选择，用户选定后立即实施并输出验收报告。区别于 [ADR-0013](0013-verification-depth-choice.md) 已废除的动手前强制九级验证选定，`prove-it` 不嵌入默认对话，只在需要对改动做验收决策时按需调用。
+- **新增显式技能 `skill-walk`（引导实施）**：`name: "letsgo:skill-walk"`，菜单显示 `letsgo: skill walk`（`disable-model-invocation: true`、`allow_implicit_invocation: false`）。仅在用户显式调用时，识别用户需求与用户指定的任意 skill 或 skill 组合（先核验指定 skill 在当前客户端均已安装且可读其 `SKILL.md`），现场筛选最小必要组合、说明各步职责与触发方式（自动隐式触发 vs 显式调用），并给出以目标原生命令开头（Claude Code 与 Antigravity 为 `/<skill>`，Codex 为 `$<skill>`，同会话继续时不前置 `letsgo:skill-walk`）的精炼代码块提示词。对需显式调用或需用户对话的节点停下给提示词，对内部可自动路由的隐式 skill 直接继续，在完成需求的同时帮助用户掌握指定技能的运用方法。
+- **`swarm-up` 重命名为 `try-swarm` 并解耦执行节奏**：将 `plugins/letsgo/skills/swarm-up/` 重命名为 `plugins/letsgo/skills/try-swarm/`（`name: "letsgo:try-swarm"`，菜单显示 `letsgo: try swarm`，保留 `disable-model-invocation: true`、宽松评估准则及三端宿主原生多智能体映射）。关键语义变更为**只决定是否采用 swarm，不干预任务执行节奏**：调用后输出极简一行评估结论（`【swarm】采用 ...` 或 `【swarm】不采用 ...`），不再自带“不等待确认立即实施”的推进指令；是否停下征求确认、是否直接动手由需求本身与其他规则（如拷问门禁、计划评审）决定。
+- **新增拷问收敛门禁规则（`references/grill-gate.md`）**：在隐式基础规则技能 `letsgo` 下新增 `plugins/letsgo/skills/letsgo/references/grill-gate.md`，并在 `letsgo/SKILL.md` 路由表登记条件——当 `grilling`、`grill-me` 或 `grill-with-docs` 完成拷问、所有决策已明确时，不直接进入实施，先输出方案摘要并写一行固定提示语 `**✅ 方案已明确——可以动手了。准备好后，请说“开始”。**`，将“完成方案拷问”与“动手修改代码”清晰隔开。
+
+## Considered Options
+
+- **同时保留 `matt-guide` 与 `skill-walk`**：两套“给出原生命令代码块由用户接力触发”的技能并存会造成职责重复与选择困惑；`skill-walk` 可覆盖含 `mattpocock-skills` 在内的任意已安装技能组合。
+- **维持 `swarm-up` 报告后立即执行的语义**：当用户在规划或拷问阶段顺手调用多智能体评估时，旧语义会越过尚未确认的方案门禁直接拉起多智能体改代码；解耦为 `try-swarm` 后可与任意节奏规则正交组合。
+- **将测试层度三选一重新放入隐式规则自动触发**：会重蹈 [ADR-0013](0013-verification-depth-choice.md) 增加日常对话轮次与流程负担的覆辙；收口为显式技能 `prove-it` 只在需要时介入。
+- **通过事件钩子拦截 `grilling` 结束动作**：违反 [ADR-0010](0010-no-hooks-skills-carry-rules.md) 禁止使用事件钩子的硬性规定；由隐式技能 `letsgo` 按场景路由读取 `references/grill-gate.md` 即可三端统一生效。
+
+## Consequences
+
+- 发布为 3.6.0（虽移除 `matt-guide` 并将 `swarm-up` 重命名为 `try-swarm`，按用户指定版本号定为 `3.6.0`）。
+- 更新三端 `plugin.json`、市场锁定文件（`.claude-plugin/marketplace.json`、`.agents/plugins/marketplace.json`）、`scripts/validate.py` 及单元测试 `scripts/tests/test_plugin_validation.py`、`GLOSSARY.md`、`docs/authoring.md`、`AGENTS.md` 与 `README.md`。

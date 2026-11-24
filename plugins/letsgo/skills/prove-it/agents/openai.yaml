@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: prove it"
+  short_description: "显式评估改动适合的测试验收层度，三选一后实施"
+policy:
+  allow_implicit_invocation: false

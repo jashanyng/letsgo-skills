@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: matt flow"
+  short_description: "显式借助 ask-matt 选用适合的 mattpocock 技能并推进"
+policy:
+  allow_implicit_invocation: false

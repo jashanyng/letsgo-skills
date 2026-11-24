@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: stepping begin"
+  short_description: "显式开始步进会话并给出当前步骤"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: write an article"
+  short_description: "显式生成一篇作为 Obsidian 笔记的文章"
+policy:
+  allow_implicit_invocation: false

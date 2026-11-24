@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: try swarm"
+  short_description: "显式评估当前需求是否适合启用原生多智能体协同，不干预执行节奏"
+policy:
+  allow_implicit_invocation: false
