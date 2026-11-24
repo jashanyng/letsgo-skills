@@ -8,7 +8,7 @@
       "name": "letsgo",
       "source": {
         "source": "git-subdir",
-        "url": "git@github.com:pcfprio/letsgo-skills.git",
+        "url": "git@github.com:jashanyng/letsgo-skills.git",
         "path": "./plugins/letsgo",
         "ref": "v3.6.0"
       },

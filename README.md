@@ -6,8 +6,8 @@
 
 | 宿主 | 添加市场 | 安装插件 | 更新插件 |
 | --- | --- | --- | --- |
-| Codex 桌面／CLI | `codex plugin marketplace add pcfprio/letsgo-skills` | `codex plugin add letsgo@letsgo-skills` | `codex plugin marketplace upgrade letsgo-skills`，再 `codex plugin add letsgo@letsgo-skills` |
-| Claude Code | `claude plugin marketplace add pcfprio/letsgo-skills` | `claude plugin install letsgo@letsgo-skills` | `claude plugin marketplace update letsgo-skills`，再 `claude plugin update letsgo@letsgo-skills` |
+| Codex 桌面／CLI | `codex plugin marketplace add jashanyng/letsgo-skills` | `codex plugin add letsgo@letsgo-skills` | `codex plugin marketplace upgrade letsgo-skills`，再 `codex plugin add letsgo@letsgo-skills` |
+| Claude Code | `claude plugin marketplace add jashanyng/letsgo-skills` | `claude plugin install letsgo@letsgo-skills` | `claude plugin marketplace update letsgo-skills`，再 `claude plugin update letsgo@letsgo-skills` |
 | Antigravity | 不适用 | `agy plugin install <插件目录>`（指向检出发布标签下的 `plugins/letsgo`） | 重新运行 `agy plugin install <插件目录>` |
 
 安装或更新后开启新会话。

@@ -15,7 +15,7 @@
 
 ### Issue tracker
 
-Issue 记录在 GitHub Issues（`pcfprio/letsgo-skills`），使用 `gh` CLI 操作。详见 `docs/agents/issue-tracker.md`。
+Issue 记录在 GitHub Issues（`jashanyng/letsgo-skills`），使用 `gh` CLI 操作。详见 `docs/agents/issue-tracker.md`。
 
 ### Triage labels
 

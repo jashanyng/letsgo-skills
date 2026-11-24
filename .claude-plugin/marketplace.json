@@ -1,16 +1,17 @@
 {
   "name": "letsgo-skills",
   "owner": {
-    "name": "pcfprio"
+    "name": "Jashan Yang",
+    "email": "jashanyng@gmail.com"
   },
-  "description": "pcfprio 的技能市场。",
+  "description": "Jashan Yang 的技能市场。",
   "plugins": [
     {
       "name": "letsgo",
-      "description": "pcfprio 的自建技能集合。",
+      "description": "Jashan Yang 的自建技能集合。",
       "source": {
         "source": "git-subdir",
-        "url": "git@github.com:pcfprio/letsgo-skills.git",
+        "url": "git@github.com:jashanyng/letsgo-skills.git",
         "path": "plugins/letsgo",
         "ref": "v3.6.0"
       }
