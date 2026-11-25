@@ -1,6 +1,6 @@
 # 新增显式技能 swarm-up
 
-> 状态：技能名称与执行节奏语义已由 [ADR-0026](0026-v360-skills-update.md) 修订（重命名为 `try-swarm`，仅决定是否采用多智能体协同而不干预任务执行节奏）。
+> 状态：技能名称与执行节奏语义已由 [ADR-0026](0026-0.0.8-skills-update.md) 修订（重命名为 `try-swarm`，仅决定是否采用多智能体协同而不干预任务执行节奏）。
 
 修订 [ADR-0017](0017-minimal-plugin.md)、[ADR-0019](0019-write-an-article-skill.md) 与 [ADR-0020](0020-matt-flow-skill.md) 中关于插件技能数量的部分。
 
@@ -19,5 +19,5 @@
 
 ## Consequences
 
-- 发布为 3.3.0（新增向后兼容功能）。
+- 发布为 0.0.6（新增向后兼容功能）。
 - `scripts/validate.py` 的 `EXPECTED_SKILLS` 加入 `swarm-up`，同步更新三端 `plugin.json`、`GLOSSARY.md`、`docs/authoring.md`、`AGENTS.md` 与 `README.md`。

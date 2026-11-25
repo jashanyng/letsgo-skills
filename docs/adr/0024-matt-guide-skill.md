@@ -1,8 +1,8 @@
 # 新增显式技能 matt-guide
 
-> 状态：已废除，被 [ADR-0026](0026-v360-skills-update.md) 取代。
+> 状态：已废除，被 [ADR-0026](0026-0.0.8-skills-update.md) 取代。
 
-修订 [ADR-0017](0017-minimal-plugin.md)、[ADR-0020](0020-matt-flow-skill.md) 与 [ADR-0022](0022-swarm-up-skill.md) 中关于插件技能数量与 matt 路由入口的部分；与 [ADR-0025](0025-git-wrap-skill.md) 一并使插件技能由 7 个增至 9 个，发布为 3.5.0。
+修订 [ADR-0017](0017-minimal-plugin.md)、[ADR-0020](0020-matt-flow-skill.md) 与 [ADR-0022](0022-swarm-up-skill.md) 中关于插件技能数量与 matt 路由入口的部分；与 [ADR-0025](0025-git-wrap-skill.md) 一并使插件技能由 7 个增至 9 个，发布为 0.0.7。
 
 2026-11-22 决定新增显式技能 `matt-guide`（`name: "letsgo:matt-guide"`，菜单显示 `letsgo: matt guide`），与既有显式技能 `matt-flow`（调用即授权、自动串联）形成对照，作为偏重人工显式接力触发的 mattpocock-skills 路线入口。
 
@@ -20,6 +20,6 @@
 
 ## Consequences
 
-- 与 [ADR-0025](0025-git-wrap-skill.md) 一并发布为 3.5.0（向后兼容新增功能，`matt-flow` 既有“调用即授权、自动串联”语义不变）。
+- 与 [ADR-0025](0025-git-wrap-skill.md) 一并发布为 0.0.7（向后兼容新增功能，`matt-flow` 既有“调用即授权、自动串联”语义不变）。
 - `matt-flow` 不再是唯一的 matt 路由入口，[ADR-0020](0020-matt-flow-skill.md) 随之更新状态批注；`plugins/letsgo/skills/letsgo/references/matt-route.md` 成为两条路由共用的单一事实来源。
 - `scripts/validate.py` 的 `EXPECTED_SKILLS` 增补 `matt-guide`，同步更新三端 `plugin.json`、`GLOSSARY.md`、`docs/authoring.md`、`AGENTS.md` 与 `README.md`。

@@ -1,7 +1,7 @@
 #!/bin/sh
-# 发布 letsgo 插件的新版本：同步版本号与市场锁定的标签，校验，提交，打标签并推送。
-# 用法：scripts/release.sh X.Y.Z
-# 发布后，用户通过各宿主的插件管理器更新到该版本。
+# 发布 letsgo 插件的新版本：同步版本号与市场锁定的裸 x.y.z 标签，校验，提交，打标签并推送。
+# 用法：scripts/release.sh [--allow-xy-bump] x.y.z
+# 默认仅允许递增 z；修改 x 或 y 须经维护者同意并显式传入 --allow-xy-bump。
 
 set -eu
 
@@ -10,18 +10,69 @@ cd "$REPO_ROOT"
 
 fail() { printf '错误：%s\n' "$1" >&2; exit 1; }
 
-[ $# -eq 1 ] || fail "用法：scripts/release.sh X.Y.Z"
-VERSION=$1
-TAG="v$VERSION"
-printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "版本号必须是 X.Y.Z 形式：$VERSION"
+ALLOW_XY_BUMP=0
+VERSION=""
+for arg in "$@"; do
+  case "$arg" in
+    --allow-xy-bump)
+      ALLOW_XY_BUMP=1
+      ;;
+    -*)
+      fail "用法：scripts/release.sh [--allow-xy-bump] x.y.z"
+      ;;
+    *)
+      [ -z "$VERSION" ] || fail "用法：scripts/release.sh [--allow-xy-bump] x.y.z"
+      VERSION=$arg
+      ;;
+  esac
+done
+
+[ -n "$VERSION" ] || fail "用法：scripts/release.sh [--allow-xy-bump] x.y.z"
+TAG="$VERSION"
+printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "版本号必须是无 v 前缀的裸 x.y.z 形式：$VERSION"
 git rev-parse -q --verify "refs/tags/$TAG" >/dev/null && fail "标签 $TAG 已存在。"
 [ -z "$(git status --porcelain)" ] || fail "工作区有未提交的改动，请先提交或清理。"
 
-LAST=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
-if [ -n "$LAST" ]; then
-  HIGHEST=$(printf '%s\n%s\n' "${LAST#v}" "$VERSION" | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
-  [ "$HIGHEST" = "$VERSION" ] || fail "版本 $VERSION 必须大于上一个版本 ${LAST#v}。"
-fi
+CURRENT=$(python3 -c 'import json; from pathlib import Path; print(json.loads(Path("plugins/letsgo/.claude-plugin/plugin.json").read_text(encoding="utf-8")).get("version", ""))')
+printf '%s\n' "$CURRENT" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "当前清单版本无效：$CURRENT"
+
+LAST_BARE=$({ git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
+
+python3 - "$CURRENT" "$VERSION" "$ALLOW_XY_BUMP" "$LAST_BARE" <<'PY'
+import sys
+
+def parse(ver: str) -> tuple[int, int, int]:
+    return tuple(int(part) for part in ver.split("."))  # type: ignore[return-value]
+
+current_str, target_str, allow_raw, last_bare = sys.argv[1:5]
+cur = parse(current_str)
+new = parse(target_str)
+allow_xy = allow_raw == "1"
+
+if not allow_xy:
+    if new[:2] != cur[:2]:
+        sys.stderr.write(
+            f"错误：未传 --allow-xy-bump 禁止修改 x 或 y（当前 {current_str} -> 目标 {target_str}）；"
+            "智能体仅可递增 z，修改 x 或 y 须经维护者同意后显式传入 --allow-xy-bump。\n"
+        )
+        sys.exit(1)
+    if new[2] <= cur[2]:
+        sys.stderr.write(f"错误：新版本 {target_str} 的 z 必须大于当前版本 {current_str}。\n")
+        sys.exit(1)
+else:
+    if new == cur:
+        sys.stderr.write(f"错误：版本 {target_str} 与当前版本相同。\n")
+        sys.exit(1)
+    if new[:2] == cur[:2] and new[2] <= cur[2]:
+        sys.stderr.write(f"错误：同 x.y 下新版本 {target_str} 必须大于当前版本 {current_str}。\n")
+        sys.exit(1)
+
+if last_bare:
+    last = parse(last_bare)
+    if new <= last:
+        sys.stderr.write(f"错误：版本 {target_str} 必须大于上一个裸版本标签 {last_bare}。\n")
+        sys.exit(1)
+PY
 
 python3 - "$VERSION" "$TAG" <<'PY'
 import json, sys

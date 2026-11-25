@@ -1,8 +1,9 @@
 # 以插件形式向 Codex 与 Claude Code 发布自建技能
 
 > 插件运行规则、私人资料与生成物位置已由 [ADR-0008](0008-plugin-runtime-and-personal-context.md) 重新定义。
+> 发布标签与版本规则已由 [ADR-0027](0027-bare-xyz-versioning.md) 修订为不带 `v` 前缀的裸 `x.y.z` 标签。
 
-自建技能原本放在 `~/.agents/skills`：Codex 直接读取这个目录，Claude Code 则要靠逐个建软链接。实际使用中，软链接漏建了也没人发现，环境资料靠 `~/.agents/contexts` 的绝对路径引用，整套做法也没法在多台机器之间同步。现在改为由本仓库同时充当两端的插件市场，发布一个 `letsgo` 插件：同一个 `skills/` 目录配两份宿主清单，按 `vX.Y.Z` 标签发布。
+自建技能原本放在 `~/.agents/skills`：Codex 直接读取这个目录，Claude Code 则要靠逐个建软链接。实际使用中，软链接漏建了也没人发现，环境资料靠 `~/.agents/contexts` 的绝对路径引用，整套做法也没法在多台机器之间同步。现在改为由本仓库同时充当两端的插件市场，发布一个 `letsgo` 插件：同一个 `skills/` 目录配两份宿主清单，按 `x.y.z` 标签发布。
 
 ## Considered Options
 

@@ -31,4 +31,4 @@ Codex 总在技能名前加插件名，所以 stepping 在 Codex 中多一层 `l
 
 ## 开发与发布
 
-只在本开发副本修改插件；规范见 [docs/authoring.md](docs/authoring.md)。作者运行 `python3 scripts/validate.py` 校验，使用 `scripts/release.sh X.Y.Z` 发布版本。
+只在本开发副本修改插件；规范见 [docs/authoring.md](docs/authoring.md)。作者运行 `python3 scripts/validate.py` 校验，使用 `scripts/release.sh x.y.z` 发布版本。

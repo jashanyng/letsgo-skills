@@ -170,7 +170,7 @@ class PluginValidationTests(unittest.TestCase):
     def test_antigravity_manifest_version_and_fields_are_checked(self) -> None:
         manifest = self.fixture / "plugins/letsgo/.antigravity-plugin/plugin.json"
         data = json.loads(manifest.read_text(encoding="utf-8"))
-        data["version"] = "0.0.1"
+        data["version"] = "9.9.9"
         data["skills"] = "./skills/"
         manifest.write_text(json.dumps(data), encoding="utf-8")
         result = self.validate()
@@ -181,6 +181,38 @@ class PluginValidationTests(unittest.TestCase):
     def test_codex_manifest_must_read_skills(self) -> None:
         self.edit("plugins/letsgo/.codex-plugin/plugin.json", '"./skills/"', '"./skills-codex/"')
         self.assertRejected("codex plugin.json skills must be ./skills/")
+
+    def test_marketplace_ref_rejects_v_prefix(self) -> None:
+        version = json.loads(
+            (self.fixture / "plugins/letsgo/.claude-plugin/plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        for relative in (".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json"):
+            path = self.fixture / relative
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for plugin in data["plugins"]:
+                if plugin["name"] == "letsgo":
+                    plugin["source"]["ref"] = f"v{version}"
+            path.write_text(json.dumps(data), encoding="utf-8")
+        self.assertRejected(f"must pin letsgo to {version}")
+
+    def test_manifest_version_rejects_v_prefix(self) -> None:
+        for relative in (
+            "plugins/letsgo/.claude-plugin/plugin.json",
+            "plugins/letsgo/.codex-plugin/plugin.json",
+            "plugins/letsgo/.antigravity-plugin/plugin.json",
+        ):
+            path = self.fixture / relative
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["version"] = "v0.0.10"
+            path.write_text(json.dumps(data), encoding="utf-8")
+        for relative in (".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json"):
+            path = self.fixture / relative
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for plugin in data["plugins"]:
+                if plugin["name"] == "letsgo":
+                    plugin["source"]["ref"] = "v0.0.10"
+            path.write_text(json.dumps(data), encoding="utf-8")
+        self.assertRejected("plugin version must be bare x.y.z")
 
 if __name__ == "__main__":
     unittest.main()

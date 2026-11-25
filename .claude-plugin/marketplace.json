@@ -13,7 +13,7 @@
         "source": "git-subdir",
         "url": "git@github.com:jashanyng/letsgo-skills.git",
         "path": "plugins/letsgo",
-        "ref": "v3.6.1"
+        "ref": "3.6.1"
       }
     }
   ]

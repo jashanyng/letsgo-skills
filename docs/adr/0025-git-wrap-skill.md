@@ -1,6 +1,6 @@
 # 新增显式技能 git-wrap
 
-维持 [ADR-0023](0023-remove-git-delivery.md)“插件不内置隐式默认 Git 收尾规则”的结论，同时修订 [ADR-0015](0015-remove-worktree-from-git-delivery.md) 中“插件包不出现工作树”的限制，并与 [ADR-0024](0024-matt-guide-skill.md) 一并修订 [ADR-0017](0017-minimal-plugin.md) 与 [ADR-0022](0022-swarm-up-skill.md) 中关于插件技能数量的部分（插件技能由 7 个增至 9 个，发布为 3.5.0）。
+维持 [ADR-0023](0023-remove-git-delivery.md)“插件不内置隐式默认 Git 收尾规则”的结论，同时修订 [ADR-0015](0015-remove-worktree-from-git-delivery.md) 中“插件包不出现工作树”的限制，并与 [ADR-0024](0024-matt-guide-skill.md) 一并修订 [ADR-0017](0017-minimal-plugin.md) 与 [ADR-0022](0022-swarm-up-skill.md) 中关于插件技能数量的部分（插件技能由 7 个增至 9 个，发布为 0.0.7）。
 
 2026-11-22 决定新增显式技能 `git-wrap`（`name: "letsgo:git-wrap"`，菜单显示 `letsgo: git wrap`），专门在全部开发任务结束后由用户显式触发，完成跨仓库、链接工作树（linked worktree）与任务临时分支的安全收尾。
 
@@ -21,5 +21,5 @@
 ## Consequences
 
 - 维持 [ADR-0023](0023-remove-git-delivery.md)“不设隐式默认 Git 收尾规则”的结论；修订 [ADR-0015](0015-remove-worktree-from-git-delivery.md) 中“插件包不出现工作树”的限制，允许在显式技能 `git-wrap` 中处理链接工作树与源分支回并评估。
-- 与 [ADR-0024](0024-matt-guide-skill.md) 一并使插件技能由 7 个增至 9 个，发布为 3.5.0（向后兼容新增功能）。
+- 与 [ADR-0024](0024-matt-guide-skill.md) 一并使插件技能由 7 个增至 9 个，发布为 0.0.7（向后兼容新增功能）。
 - `scripts/validate.py` 的 `EXPECTED_SKILLS` 加入 `git-wrap`，同步更新三端 `plugin.json`、`GLOSSARY.md`（新增 `Git 收尾` 与 `源分支` 术语）、`docs/authoring.md`、`AGENTS.md` 与 `README.md`。

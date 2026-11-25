@@ -1,6 +1,6 @@
 # 不在 letsgo 插件中规定工作树流程
 
-**状态：修改仓库文件后的提交、合并与推送由 [ADR-0014](0014-git-delivery-after-changes.md) 与 [ADR-0015](0015-remove-worktree-from-git-delivery.md) 规定；移除工作树规则的结论由 ADR-0015 延续。**以下是 v1.0.8 的决定；普通仓库任务仍不默认创建工作树。
+**状态：修改仓库文件后的提交、合并与推送由 [ADR-0014](0014-git-delivery-after-changes.md) 与 [ADR-0015](0015-remove-worktree-from-git-delivery.md) 规定；移除工作树规则的结论由 ADR-0015 延续。**以下是 0.0.1 的决定；普通仓库任务仍不默认创建工作树。
 
 取代 [ADR-0004](0004-isolate-changes-in-worktrees.md)。letsgo 插件不再规定是否创建 git 工作树，也不规定工作树的合并、推送、删除或工作分支清理流程。Git 交付方式由项目规则和当前任务决定；原工作树流程附带的默认自动合并与推送要求一并取消。
 

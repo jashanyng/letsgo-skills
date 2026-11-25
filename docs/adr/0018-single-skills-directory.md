@@ -31,5 +31,5 @@ Codex 总在 `name` 前加插件名，Antigravity 从不加（转换 Claude 清�
 
 ## Consequences
 
-- 发布为 3.1.0；Codex 中 stepping 调用名、`personal` 的显式入口与 `conventions` 名称都发生变化。
+- 发布为 0.0.3；Codex 中 stepping 调用名、`personal` 的显式入口与 `conventions` 名称都发生变化。
 - `scripts/validate.py` 要求技能目录正好为上述四个、禁止 `skills-codex/` 与 `_rules/` 复活，并按上述规则检查 `name` 与 `display_name`。

@@ -57,6 +57,7 @@ ANTIGRAVITY_FIELDS = {
     "name", "displayName", "description", "version", "author",
     "homepage", "repository", "logo", "suggestedPrompts", "disabled",
 }
+BARE_VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 
 def load_json(path: Path, errors: list[str]) -> dict:
@@ -91,6 +92,8 @@ def check_manifests(errors: list[str]) -> None:
         errors.append(
             f"plugin versions differ: claude={version} codex={codex.get('version')} antigravity={antigravity.get('version')}"
         )
+    if not isinstance(version, str) or not BARE_VERSION.match(version):
+        errors.append(f"plugin version must be bare x.y.z (no 'v' prefix), found {version!r}")
     for name, data in (("claude", claude), ("codex", codex), ("antigravity", antigravity)):
         if data.get("name") != "letsgo":
             errors.append(f"{name} plugin name must be letsgo")
@@ -106,8 +109,8 @@ def check_manifests(errors: list[str]) -> None:
     for market in (ROOT / ".claude-plugin" / "marketplace.json", ROOT / ".agents" / "plugins" / "marketplace.json"):
         data = load_json(market, errors)
         refs = [p["source"].get("ref") for p in data.get("plugins", []) if p.get("name") == "letsgo"]
-        if refs != [f"v{version}"]:
-            errors.append(f"{market.relative_to(ROOT)} must pin letsgo to v{version}, found {refs}")
+        if refs != [version]:
+            errors.append(f"{market.relative_to(ROOT)} must pin letsgo to {version}, found {refs}")
 
 
 def check_skills(errors: list[str]) -> None:
