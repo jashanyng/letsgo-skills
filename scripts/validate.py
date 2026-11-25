@@ -10,6 +10,11 @@ from pathlib import Path
 
 import yaml
 
+try:
+    import changelog_guard
+except ImportError:  # pragma: no cover
+    from scripts import changelog_guard
+
 ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = ROOT / "plugins" / "letsgo"
 SKILLS = PLUGIN / "skills"
@@ -218,6 +223,19 @@ def check_private_payload(errors: list[str]) -> None:
                 break
 
 
+def check_governance_docs(errors: list[str]) -> None:
+    version: str | None = None
+    claude_path = PLUGIN / ".claude-plugin" / "plugin.json"
+    if claude_path.is_file():
+        try:
+            raw_version = json.loads(claude_path.read_text(encoding="utf-8")).get("version")
+        except (OSError, json.JSONDecodeError):
+            raw_version = None
+        if isinstance(raw_version, str) and BARE_VERSION.match(raw_version):
+            version = raw_version
+    errors.extend(changelog_guard.validate_governance_docs(ROOT, version))
+
+
 def main() -> int:
     errors: list[str] = []
     check_manifests(errors)
@@ -225,6 +243,7 @@ def main() -> int:
     check_text(errors)
     check_no_hooks(errors)
     check_private_payload(errors)
+    check_governance_docs(errors)
     if errors:
         print("\n".join(f"ERROR: {e}" for e in errors))
         return 1

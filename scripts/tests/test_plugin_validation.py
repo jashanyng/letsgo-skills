@@ -27,7 +27,7 @@ class PluginValidationTests(unittest.TestCase):
                 symlinks=True,
                 ignore=shutil.ignore_patterns("__pycache__", ".DS_Store", "*.pyc"),
             )
-        for name in ("GLOSSARY.md", "README.md", "AGENTS.md"):
+        for name in ("GLOSSARY.md", "README.md", "AGENTS.md", "CHANGELOG.md"):
             shutil.copy2(ROOT / name, self.fixture / name)
 
     def validate(self) -> subprocess.CompletedProcess[str]:
@@ -213,6 +213,62 @@ class PluginValidationTests(unittest.TestCase):
                     plugin["source"]["ref"] = "v0.0.10"
             path.write_text(json.dumps(data), encoding="utf-8")
         self.assertRejected("plugin version must be bare x.y.z")
+
+    def test_missing_changelog_is_rejected(self) -> None:
+        (self.fixture / "CHANGELOG.md").unlink()
+        self.assertRejected("CHANGELOG.md")
+
+    def test_changelog_missing_unreleased_is_rejected(self) -> None:
+        self.edit("CHANGELOG.md", "## [Unreleased]\n", "")
+        self.assertRejected("## [Unreleased]")
+
+    def test_changelog_missing_current_version_is_rejected(self) -> None:
+        version = json.loads(
+            (self.fixture / "plugins/letsgo/.claude-plugin/plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        self.edit("CHANGELOG.md", f"## [{version}]", "## [0.0.0]")
+        self.assertRejected(f"## [{version}]")
+
+    def test_missing_or_empty_compatibility_doc_is_rejected(self) -> None:
+        compat = self.fixture / "docs" / "compatibility.md"
+        compat.unlink()
+        self.assertRejected("docs/compatibility.md")
+
+        compat.write_text("   \n\n", encoding="utf-8")
+        self.assertRejected("docs/compatibility.md")
+
+    def test_changelog_ignores_fenced_code_block_headings(self) -> None:
+        version = json.loads(
+            (self.fixture / "plugins/letsgo/.claude-plugin/plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        self.append(
+            "CHANGELOG.md",
+            "\n### 示例说明\n\n"
+            "```markdown\n"
+            "## [Unreleased]\n\n"
+            "## [0.0.11]\n"
+            "```\n\n"
+            "~~~\n"
+            "## [Unreleased]\n"
+            f"## [{version}]\n"
+            "~~~\n",
+        )
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_changelog_fenced_version_heading_does_not_satisfy_required_version(self) -> None:
+        version = json.loads(
+            (self.fixture / "plugins/letsgo/.claude-plugin/plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        (self.fixture / "CHANGELOG.md").write_text(
+            "# 变更日志（Changelog）\n\n"
+            "## [Unreleased]\n\n"
+            "```markdown\n"
+            f"## [{version}]\n"
+            "```\n",
+            encoding="utf-8",
+        )
+        self.assertRejected(f"## [{version}]")
 
 if __name__ == "__main__":
     unittest.main()

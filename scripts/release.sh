@@ -94,6 +94,8 @@ for path in (".claude-plugin/marketplace.json", ".agents/plugins/marketplace.jso
     Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 PY
 
+python3 scripts/changelog_guard.py archive "$VERSION" || { git checkout -- .; exit 1; }
+
 python3 scripts/validate.py || { git checkout -- .; fail "校验未通过，已撤销版本号改动。"; }
 
 git add -A

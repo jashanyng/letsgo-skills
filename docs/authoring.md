@@ -49,6 +49,9 @@ Codex 总在 `name` 前加插件名，Antigravity 从不加，Claude Code 对 `l
 
 - 编辑只在开发副本进行，不编辑三端的插件缓存。
 - 校验：`python3 scripts/validate.py`；改动校验或发版脚本时运行单元测试 `python3 -m unittest discover -s scripts/tests`。可另用 `agy plugin validate plugins/letsgo` 检查 Antigravity 读取结果。
+- **变更日志与兼容性文档门禁**：
+  - 根目录 [CHANGELOG.md](../CHANGELOG.md) 是版本更新说明的唯一事实源；修改技能、规则或行为时须同步记入其 `## [Unreleased]` 节，`scripts/validate.py` 会校验 `## [Unreleased]` 与当前清单版本 `## [x.y.z]` 存在，发版时由 `scripts/release.sh` 自动归档至 `## [x.y.z] - YYYY-MM-DD`。
+  - 涉及三端兼容边界、依赖前置、版本演进契约或升级迁移流程的调整，须同步更新 [docs/compatibility.md](compatibility.md)（`validate.py` 校验其存在且非空）。
 - **版本规则与权限红线**（[ADR-0027](adr/0027-bare-xyz-versioning.md)）：
   - 插件 `version`、市场 `ref` 与 Git 标签统一使用不带 `v` 前缀的裸 `x.y.z`。
   - 当前处于制作期，从 `0.0.1` 起步并仅递增 `z`；正式对外推荐或上架外部技能平台时定为 `1.0.0`（`1.0.0` 后 `x` 对应重大架构/组织/品牌代际，`y` 对应开发期周期批次，`z` 对应同批次功能与修复递增）。

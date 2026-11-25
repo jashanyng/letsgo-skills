@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import date
 import json
+import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -48,8 +51,14 @@ class ReleaseScriptTests(unittest.TestCase):
                 symlinks=True,
                 ignore=shutil.ignore_patterns("__pycache__", ".DS_Store", "*.pyc"),
             )
-        for name in ("GLOSSARY.md", "README.md", "AGENTS.md"):
+        for name in ("GLOSSARY.md", "README.md", "AGENTS.md", "CHANGELOG.md"):
             shutil.copy2(ROOT / name, seed / name)
+        changelog_path = seed / "CHANGELOG.md"
+        if f"## [{initial_version}]" not in changelog_path.read_text(encoding="utf-8"):
+            changelog_path.write_text(
+                f"# 变更日志（Changelog）\n\n## [Unreleased]\n\n## [{initial_version}]\n\n- 种子版本基线。\n",
+                encoding="utf-8",
+            )
 
         self._set_manifests(seed, initial_version, initial_version)
         self._git(seed, "init", "-b", "main")
@@ -160,6 +169,107 @@ class ReleaseScriptTests(unittest.TestCase):
         reset_ok = self._run_release(work2, "--allow-xy-bump", "0.0.10")
         self.assertEqual(reset_ok.returncode, 0, reset_ok.stdout + reset_ok.stderr)
         self.assertIn("0.0.10", self._git(origin2, "tag", "-l").stdout.splitlines())
+
+    def test_release_archives_non_empty_unreleased_changelog(self) -> None:
+        _, work = self._create_repo("0.0.10", "0.0.10")
+        changelog = work / "CHANGELOG.md"
+        text = changelog.read_text(encoding="utf-8")
+        changelog.write_text(
+            text.replace("\n## [Unreleased]\n", "\n## [Unreleased]\n\n### 新增\n\n- 新增测试条目。\n", 1),
+            encoding="utf-8",
+        )
+        self._git(work, "add", "CHANGELOG.md")
+        self._git(work, "commit", "-m", "docs: add unreleased note")
+
+        result = self._run_release(work, "0.0.11")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+        updated = changelog.read_text(encoding="utf-8")
+        today = date.today().isoformat()
+        match = re.search(
+            rf"^## \[Unreleased\]\s*\n+## \[0\.0\.11\] - {re.escape(today)}\n+(.*?)\n+## \[0\.0\.10\]",
+            updated,
+            re.MULTILINE | re.DOTALL,
+        )
+        self.assertIsNotNone(match, f"unexpected CHANGELOG.md layout:\n{updated}")
+        assert match is not None
+        self.assertIn("- 新增测试条目。", match.group(1))
+
+        check = subprocess.run(
+            [sys.executable, "scripts/validate.py"], cwd=work, text=True, capture_output=True, check=False
+        )
+        self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+
+    def test_release_archives_empty_unreleased_changelog(self) -> None:
+        _, work = self._create_repo("0.0.10", "0.0.10")
+        changelog = work / "CHANGELOG.md"
+        changelog.write_text(
+            "# 变更日志（Changelog）\n\n## [Unreleased]\n\n## [0.0.10]\n\n- 基线版本。\n",
+            encoding="utf-8",
+        )
+        self._git(work, "add", "CHANGELOG.md")
+        self._git(work, "commit", "-m", "docs: reset unreleased to empty")
+
+        result = self._run_release(work, "0.0.11")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+        updated = changelog.read_text(encoding="utf-8")
+        today = date.today().isoformat()
+        match = re.search(
+            rf"^## \[Unreleased\]\s*\n+## \[0\.0\.11\] - {re.escape(today)}\n+(.+?)\n+## \[0\.0\.10\]",
+            updated,
+            re.MULTILINE | re.DOTALL,
+        )
+        self.assertIsNotNone(match, f"unexpected CHANGELOG.md layout:\n{updated}")
+        assert match is not None
+        self.assertTrue(match.group(1).strip())
+
+        check = subprocess.run(
+            [sys.executable, "scripts/validate.py"], cwd=work, text=True, capture_output=True, check=False
+        )
+        self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+
+    def test_release_archives_preserving_fenced_code_block_headings(self) -> None:
+        _, work = self._create_repo("0.0.10", "0.0.10")
+        changelog = work / "CHANGELOG.md"
+        fenced_example = (
+            "### 示例\n\n"
+            "- 保留围栏代码块内的标题示例：\n\n"
+            "```markdown\n"
+            "## [Unreleased]\n\n"
+            "## [0.0.11]\n"
+            "- 示例条目\n"
+            "```\n\n"
+            "~~~markdown\n"
+            "## [0.0.11]\n"
+            "~~~\n"
+        )
+        text = changelog.read_text(encoding="utf-8")
+        changelog.write_text(
+            text.replace("\n## [Unreleased]\n", f"\n## [Unreleased]\n\n{fenced_example}", 1),
+            encoding="utf-8",
+        )
+        self._git(work, "add", "CHANGELOG.md")
+        self._git(work, "commit", "-m", "docs: add fenced example in unreleased")
+
+        result = self._run_release(work, "0.0.11")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+        updated = changelog.read_text(encoding="utf-8")
+        today = date.today().isoformat()
+        match = re.search(
+            rf"^## \[Unreleased\]\s*\n+## \[0\.0\.11\] - {re.escape(today)}\n+(.*?)\n+## \[0\.0\.10\]",
+            updated,
+            re.MULTILINE | re.DOTALL,
+        )
+        self.assertIsNotNone(match, f"unexpected CHANGELOG.md layout:\n{updated}")
+        assert match is not None
+        self.assertIn(fenced_example.strip(), match.group(1))
+
+        check = subprocess.run(
+            [sys.executable, "scripts/validate.py"], cwd=work, text=True, capture_output=True, check=False
+        )
+        self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
 
 
 if __name__ == "__main__":
