@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### 变更
+
+- **`skill-walk` 更名并扩展为 `guide`**（[ADR-0028](docs/adr/0028-guide-skill-and-rules-update.md)）：将显式技能 `letsgo:skill-walk` 升级为 `letsgo:guide`（菜单显示 `letsgo: guide`），覆盖范围从用户指定的技能扩展为当前宿主客户端具备的各类能力（skill、MCP 工具与内置工具）。支持按“本次消息明确指定 > 上下文明确选用 > 默认全部能力”识别能力范围，经两段低耗筛选后直接推进可自动或直接调用的能力，对需显式调用的技能默认停下给出原生命令提示词（调用时显式授权也可代为执行），范围外明显更合适时直接采用并标 `（范围外）`，缺少必要支持时检索宿主市场且只报告不安装。
+- **放松 `matt-flow` 选型措辞**（[ADR-0028](docs/adr/0028-guide-skill-and-rules-update.md)）：更新 `matt-flow` 描述及 `references/matt-route.md` 路线图规则，移除“最小必要”“最小技能序列”等限制性措辞，改为按当前需求的复杂度、清晰度与上下文状态现场评估并推荐单个技能或完整主线等合适技能组合。
+
+### 移除
+
+- **移除拷问收敛门禁（`references/grill-gate.md`）**（[ADR-0028](docs/adr/0028-guide-skill-and-rules-update.md)）：删除 `plugins/letsgo/skills/letsgo/references/grill-gate.md`，并从 `letsgo/SKILL.md` 的 `description` 与路由表中移除对应条目；`grilling`、`grill-me` 与 `grill-with-docs` 收敛后不再由插件隐式门禁拦截。
+
+### 迁移说明
+
+- 原 `/letsgo:skill-walk`（Codex：`$letsgo:letsgo:skill-walk`）已迁移为 `/letsgo:guide`（Codex：`$letsgo:letsgo:guide`）。
+- 如需在 `grilling`、`grill-me` 或 `grill-with-docs` 收敛后只报告不实施，请在调用时显式声明，例如：`/grill-with-docs …（方案明确后只报告，不实施）`。
+
 ## [0.0.10] - 2026-11-25
 
 ### 规范与基线

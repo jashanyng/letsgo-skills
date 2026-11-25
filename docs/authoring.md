@@ -1,6 +1,6 @@
 # 编写 letsgo 插件
 
-本仓库是开发副本；用户通过 Codex、Claude Code 或 Antigravity 的插件管理器安装 `plugins/letsgo/`。仓库脚本只服务作者的校验和发布。术语见 [GLOSSARY.md](../GLOSSARY.md)，当前范围见 [ADR-0017](adr/0017-minimal-plugin.md)、[ADR-0018](adr/0018-single-skills-directory.md)、[ADR-0025](adr/0025-git-wrap-skill.md)、[ADR-0026](adr/0026-0.0.8-skills-update.md) 与 [ADR-0027](adr/0027-bare-xyz-versioning.md)。
+本仓库是开发副本；用户通过 Codex、Claude Code 或 Antigravity 的插件管理器安装 `plugins/letsgo/`。仓库脚本只服务作者的校验和发布。术语见 [GLOSSARY.md](../GLOSSARY.md)，当前范围见 [ADR-0017](adr/0017-minimal-plugin.md)、[ADR-0018](adr/0018-single-skills-directory.md)、[ADR-0025](adr/0025-git-wrap-skill.md)、[ADR-0026](adr/0026-0.0.8-skills-update.md)、[ADR-0027](adr/0027-bare-xyz-versioning.md) 与 [ADR-0028](adr/0028-guide-skill-and-rules-update.md)。
 
 ## 布局
 
@@ -12,16 +12,15 @@ skills/
 │   ├── SKILL.md                规则路由表
 │   ├── agents/openai.yaml
 │   └── references/             基础、共用与用户级规则
-│       ├── grill-gate.md       拷问收敛门禁规则
 │       ├── matt-route.md       只供 matt-flow 读取的路线与门禁规范
 │       └── stepping/           步进专用规则
 ├── stepping-begin/
 ├── stepping-doit/
 ├── stepping-finish/
 ├── write-an-article/           显式技能：生成作为 Obsidian 笔记的文章
-├── matt-flow/                  显式技能：借助 ask-matt 选用适合的 mattpocock 技能并自动串联推进
+├── matt-flow/                  显式技能：借助 ask-matt 评估并推荐 mattpocock 技能并自动串联推进
 ├── prove-it/                   显式技能：对当前改动现场评估测试验收层度，三选一后实施
-├── skill-walk/                 显式技能：引导用户采用指定 skill(s) 逐步实现需求
+├── guide/                      显式技能：按需求现场评估适合的能力（skill / MCP / 内置工具）并推进实施
 ├── try-swarm/                  显式技能：评估并按需采用宿主原生多智能体协同，不干预执行节奏
 └── git-wrap/                   显式技能：对涉及仓库执行英文提交、向源分支安全合并推送与清理评估
 ```
@@ -35,7 +34,7 @@ skills/
 | 技能 | `name` | `display_name`（Codex 菜单） | 调用 |
 | --- | --- | --- | --- |
 | `letsgo` | `letsgo` | `letsgo` | 隐式：无 `disable-model-invocation`，`user-invocable: false`，`allow_implicit_invocation: true` |
-| `stepping-*`、`write-an-article`、`matt-flow`、`prove-it`、`skill-walk`、`try-swarm`、`git-wrap` | `letsgo:<目录名>` | `letsgo: stepping begin`、`letsgo: write an article` 等 | 显式：`disable-model-invocation: true`，`allow_implicit_invocation: false` |
+| `stepping-*`、`write-an-article`、`matt-flow`、`prove-it`、`guide`、`try-swarm`、`git-wrap` | `letsgo:<目录名>` | `letsgo: stepping begin`、`letsgo: write an article` 等 | 显式：`disable-model-invocation: true`，`allow_implicit_invocation: false` |
 
 Codex 总在 `name` 前加插件名，Antigravity 从不加，Claude Code 对 `letsgo:` 开头的 `name` 不重复加。因此 stepping 在 Claude Code 与 Antigravity 中为 `/letsgo:stepping-begin`，在 Codex 中为 `$letsgo:letsgo:stepping-begin`。`agy plugin validate --strict` 会因 `name` 与目录名不一致报警告，这是预期的。
 

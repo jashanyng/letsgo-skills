@@ -1,5 +1,0 @@
-interface:
-  display_name: "letsgo: skill walk"
-  short_description: "显式引导采用指定 skill(s) 逐步实现需求"
-policy:
-  allow_implicit_invocation: false

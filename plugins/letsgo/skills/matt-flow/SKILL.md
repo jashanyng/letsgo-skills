@@ -1,6 +1,6 @@
 ---
 name: "letsgo:matt-flow"
-description: 仅在显式调用时，借助 ask-matt 为用户需求现场评估并选用适合的 mattpocock-skills 技能或最小必要组合，自动串联无需用户判断的相邻步骤，并在门禁处给出可直接使用的提示词。
+description: 仅在显式调用时，借助 ask-matt 为用户需求现场评估并推荐 mattpocock-skills 技能或技能组合，自动串联无需用户判断的相邻步骤，并在门禁处给出可直接使用的提示词。
 disable-model-invocation: true
 ---
 

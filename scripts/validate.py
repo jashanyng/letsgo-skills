@@ -29,7 +29,7 @@ EXPECTED_SKILLS = {
     "write-an-article",
     "matt-flow",
     "prove-it",
-    "skill-walk",
+    "guide",
     "try-swarm",
     "git-wrap",
 }
@@ -50,6 +50,7 @@ LEGACY_PATTERNS = (
     re.compile(r"\bletsgo-(?!skills\b)[a-z]+(?:-[a-z]+)*"),
     re.compile(r"tool-parity|routing-contract|common-rules\.md|terminology\.md"),
     re.compile(r"_rules/|skills-codex|letsgo:personal|letsgo:conventions"),
+    re.compile(r"letsgo:skill-walk|grill-gate\.md"),
 )
 # ADR-0017 废除的流程概念，不得重新进入插件包。
 RETIRED_TERMS = (

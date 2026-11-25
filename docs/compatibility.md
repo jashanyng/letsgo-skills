@@ -17,11 +17,12 @@
 三端共用唯一的 `plugins/letsgo/skills/` 目录，无符号链接、无 `skills-codex/` 副本（[ADR-0018](adr/0018-single-skills-directory.md)）：
 
 - 隐式基础规则技能：`letsgo`（`name: "letsgo"`，`user-invocable: false`，`allow_implicit_invocation: true`）。
-- 显式技能（共 9 个，均配置 `disable-model-invocation: true`、`allow_implicit_invocation: false`，`name` 为 `letsgo:<目录名>`）：`stepping-begin`、`stepping-doit`、`stepping-finish`、`write-an-article`、`matt-flow`、`prove-it`、`skill-walk`、`try-swarm`、`git-wrap`。
+- 显式技能（共 9 个，均配置 `disable-model-invocation: true`、`allow_implicit_invocation: false`，`name` 为 `letsgo:<目录名>`）：`stepping-begin`、`stepping-doit`、`stepping-finish`、`write-an-article`、`matt-flow`、`prove-it`、`guide`、`try-swarm`、`git-wrap`。
 
 ### 依赖前置与运行边界
 
-- **`mattpocock-skills` 前置要求**：显式技能 `matt-flow` 借助 `ask-matt` 选用并串联 `mattpocock-skills` 技能，调用前需在本机对应宿主端已安装 `mattpocock-skills`；隐式规则 `plugins/letsgo/skills/letsgo/references/grill-gate.md` 在 `grilling`、`grill-me` 或 `grill-with-docs` 收敛时配合生效。
+- **`mattpocock-skills` 前置要求**：显式技能 `matt-flow` 借助 `ask-matt` 选用并串联 `mattpocock-skills` 技能，调用前需在本机对应宿主端已安装 `mattpocock-skills`。
+- **`guide` 能力评估与宿主市场推荐边界**：`guide` 仅基于会话已载入能力清单及入围候选的 `SKILL.md` / MCP Schema 现场评估，不创建持久化能力索引文件；指定范围内未生效的能力不凭记忆执行。缺少必要支持时优先检索宿主自带市场（Antigravity 使用 `search_marketplace`，Claude Code 与 Codex 查询插件市场；若已安装 `find-skills` 则配合使用，必要时联网检索），且只报告名称、用途、安装方式及替代做法，不自行安装。
 - **无事件钩子硬性边界**（[ADR-0010](adr/0010-no-hooks-skills-carry-rules.md)）：`letsgo` 插件不使用任何宿主生命周期事件钩子，拒绝 `hooks/`、`rules/` 目录及清单/前置元数据中的 `hooks` 字段，由 `scripts/validate.py` 机械拦截。
 - **多智能体协同映射**：`try-swarm` 按宿主端原生能力评估与触发——Codex 对应 `multi_agent_v2`、Claude Code 对应 `Agent Teams`、Antigravity 对应 `swarm`。
 - **本机私人资料隔离**：宿主主机、SSH、域名与默认产出目录等私人事实仅保存于当前用户本机 `~/.agents/letsgo/personal/`（入口为 `index.md`），交付文章等产出存放在 `~/.agents/letsgo/generated/`；安装或升级插件本身不会创建用户目录，也不会改写用户的全局 `AGENTS.md`、`CLAUDE.md` 或客户端配置文件。
@@ -31,7 +32,7 @@
 依据 [ADR-0027](adr/0027-bare-xyz-versioning.md)，本仓库版本号与分发契约遵循以下约定：
 
 - **裸 `x.y.z` 统一格式**：三端 `plugin.json` 的 `version`、两份 `marketplace.json` 的 `source.ref` 以及 Git 发布标签一律使用不带 `v` 前缀的裸 `x.y.z`。
-- **当前制作期契约（`0.0.10`）**：插件处于 `0.0.x` 制作期，从 `0.0.1` 起步并仅递增 `z`；在此阶段允许围绕十个核心技能与规则路由持续打磨。智能体仅被授权递增 `z`，任何 `x` 或 `y` 变更必须经维护者明确同意并在发布时显式传入 `scripts/release.sh --allow-xy-bump x.y.z`。
+- **`0.0.x` 制作期契约**：插件处于 `0.0.x` 制作期，从 `0.0.1` 起步并仅递增 `z`；在此阶段允许围绕十个核心技能与规则路由持续打磨。智能体仅被授权递增 `z`，任何 `x` 或 `y` 变更必须经维护者明确同意并在发布时显式传入 `scripts/release.sh --allow-xy-bump x.y.z`。
 - **`1.0.0` 公开推荐分界与 `x/y/z` 语义**：仅当插件正式对外推荐或上架外部技能平台时，才将版本定为 `1.0.0`。进入 `1.0.0` 后：
   - `x`：重大架构调整、组织形态或品牌代际变更；
   - `y`：开发期周期批次演进；
@@ -73,6 +74,7 @@
 
 | 迁移节点 | 变更与重映射说明 | 参考决策 |
 | --- | --- | --- |
+| `0.0.11`（2026-11-25） | 将 `skill-walk` 更名并扩展为 `guide`（覆盖 skill、MCP 与内置工具），移除 `grill-gate.md` 隐式门禁并放松 `matt-flow` 选型措辞；原 `/letsgo:skill-walk`（Codex `$letsgo:letsgo:skill-walk`）迁移至 `/letsgo:guide`（Codex `$letsgo:letsgo:guide`），需要拷问收敛后停下可在调用时显式声明 | [ADR-0028](adr/0028-guide-skill-and-rules-update.md) |
 | `0.0.10`（2026-11-25） | 废弃历史带 `v` 前缀标签与 `3.x` 编号序列（原 `v1.0.8` 与 `3.0.0`–`3.6.0` 按演进节点重映射为 `0.0.1`–`0.0.8`，身份迁移后版本记为 `0.0.9`），统一切换为裸 `x.y.z` 标签并从 `0.0.10` 续接；从旧版升级需按上节先卸载旧缓存再重装 | [ADR-0027](adr/0027-bare-xyz-versioning.md) |
 | `0.0.8`（2026-11-24） | 移除 `matt-guide`、将 `swarm-up` 重命名为 `try-swarm`（不再干预任务节奏），新增 `prove-it`、`skill-walk` 与 `grill-gate.md` 收敛门禁，技能数由 9 个增至 10 个 | [ADR-0026](adr/0026-0.0.8-skills-update.md) |
 | `0.0.7`（2026-11-22） | 新增显式技能 `git-wrap`，专门承担多仓库与链接工作树的安全收尾（含长期保护分支校验与清理评估） | [ADR-0025](adr/0025-git-wrap-skill.md) |

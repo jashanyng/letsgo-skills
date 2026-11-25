@@ -5,7 +5,7 @@
 ## Language
 
 **letsgo 插件**:
-本仓库发布的唯一插件，只含 10 个技能：隐式的 `letsgo` 与显式的 `stepping-begin`、`stepping-doit`、`stepping-finish`、`write-an-article`、`matt-flow`、`prove-it`、`skill-walk`、`try-swarm`、`git-wrap`，三端共用一份 `skills/` 目录。
+本仓库发布的唯一插件，只含 10 个技能：隐式的 `letsgo` 与显式的 `stepping-begin`、`stepping-doit`、`stepping-finish`、`write-an-article`、`matt-flow`、`prove-it`、`guide`、`try-swarm`、`git-wrap`，三端共用一份 `skills/` 目录。
 _Avoid_: 技能包、skill 集合
 
 **市场**:
@@ -82,7 +82,7 @@ _Avoid_: 工作流、任务流程
 步骤主答复首行的任务摘要与粗略进度百分比。
 
 **路线图**:
-`matt-flow` 首次回复按需求现场评估选出的适合技能或最小技能序列，标明每步的推进方式及确需确认的待定分支。
+`matt-flow` 首次回复按需求现场评估推荐的技能或技能组合，标明每步的推进方式及确需确认的待定分支。
 
 **自动串联**:
 `matt-flow` 中两步之间无需用户判断时，由智能体读取下一个技能的 `SKILL.md` 并直接执行，不停下。
@@ -92,15 +92,18 @@ _Avoid_: 自动推进、一键执行
 `matt-flow` 中必须停下等待用户的节点：需要用户判断，或需要新会话、清空上下文；停下时给出可直接使用的提示词。
 _Avoid_: 检查点、审批点
 
-**拷问收敛门禁**:
-`grilling`、`grill-me` 或 `grill-with-docs` 拷问收敛、所有决策明确后不直接实施，报告方案摘要并等待用户确认开始（`references/grill-gate.md`）。
-
 **验证修改**:
 `prove-it` 对当前改动现场评估测试验收层度，给出推荐、轻量、深度三个选项供用户选择后实施。
 _Avoid_: 验证深度、验证选定
 
+**能力**:
+当前宿主客户端具备的 skill、MCP 工具与内置工具等的统称。
+
+**能力范围**:
+`guide` 现场评估时优先考虑的能力集合；未指定且上下文无明确选用表达时，默认涵盖当前宿主支持的全部能力。
+
 **引导实施**:
-`skill-walk` 引导用户采用指定的已生效 skill(s) 逐步实现需求并掌握用法。
+`guide` 按需求在能力范围或全部能力中现场评估适合的 skill、MCP 与内置工具，推进实施、为需显式调用的技能给出原生命令提示词，或在缺失必要支持时推荐可用扩展。
 
 **多智能体协同**:
 `try-swarm` 现场评估当前需求是否适合采用宿主客户端原生多智能体机制（Codex 的 `multi_agent_v2`、Claude Code 的 `Agent Teams`、Antigravity 的 `swarm`），适合时采用、不适合时不采用，且不干预任务本身的执行节奏。

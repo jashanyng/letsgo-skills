@@ -1,0 +1,5 @@
+interface:
+  display_name: "letsgo: guide"
+  short_description: "显式评估并引导采用适合的能力逐步实现需求"
+policy:
+  allow_implicit_invocation: false

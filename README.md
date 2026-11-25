@@ -16,14 +16,14 @@
 
 | 技能 | Claude Code 与 Antigravity | Codex | 作用 |
 | --- | --- | --- | --- |
-| `letsgo` | 隐式，按场景自动选用 | 隐式 | 基础规则、共用规则与用户级规则：语言、私人资料与远程连接、浏览器、代码输出、文件位置、变更安全、故障报告、拷问收敛门禁；用户说“更新我的 letsgo 私人资料：……”时在 `~/.agents/letsgo/personal/` 创建或更新分类私人资料 |
+| `letsgo` | 隐式，按场景自动选用 | 隐式 | 基础规则、共用规则与用户级规则：语言、私人资料与远程连接、浏览器、代码输出、文件位置、变更安全、故障报告；用户说“更新我的 letsgo 私人资料：……”时在 `~/.agents/letsgo/personal/` 创建或更新分类私人资料 |
 | `stepping-begin` | `/letsgo:stepping-begin` | `$letsgo:letsgo:stepping-begin` | 把需求当作明确需求，建立步进会话并给出第一步 |
 | `stepping-doit` | `/letsgo:stepping-doit` | `$letsgo:letsgo:stepping-doit` | 由智能体执行当前步骤，并展示下一步 |
 | `stepping-finish` | `/letsgo:stepping-finish` | `$letsgo:letsgo:stepping-finish` | 由智能体完成全部剩余步骤 |
 | `write-an-article` | `/letsgo:write-an-article` | `$letsgo:letsgo:write-an-article` | 按主题（未给主题时整理当前对话）生成一篇作为 Obsidian 笔记的文章，存放到私人资料指定的目录 |
-| `matt-flow` | `/letsgo:matt-flow` | `$letsgo:letsgo:matt-flow` | 写在消息开头、后接需求（Antigravity 只识别开头的命令），借助 `ask-matt` 选用适合的 mattpocock-skills 技能或最小必要组合，自动串联无需判断的步骤，在门禁处给出可直接使用的提示词；需已安装 mattpocock-skills |
+| `matt-flow` | `/letsgo:matt-flow` | `$letsgo:letsgo:matt-flow` | 写在消息开头、后接需求（Antigravity 只识别开头的命令），借助 `ask-matt` 现场评估并推荐适合的 mattpocock-skills 技能或技能组合，自动串联无需判断的步骤，在门禁处给出可直接使用的提示词；需已安装 mattpocock-skills |
 | `prove-it` | `/letsgo:prove-it` | `$letsgo:letsgo:prove-it` | 对当前改动现场评估适合的测试验收层度与方法，给出推荐、轻量、深度三个选项供用户选择后实施 |
-| `skill-walk` | `/letsgo:skill-walk` | `$letsgo:letsgo:skill-walk` | 引导用户采用指定的已生效 skill 或 skill 组合来实现需求，逐步说明并给出可复制的代码块提示词推进 |
+| `guide` | `/letsgo:guide` | `$letsgo:letsgo:guide` | 按需求在能力范围或当前宿主全部能力中现场评估适合的 skill、MCP 与内置工具，推进实施、为需显式调用的技能给出可复制代码块提示词（调用时显式授权可代为执行），或在缺失支持时检索宿主市场只报告不安装 |
 | `try-swarm` | `/letsgo:try-swarm` | `$letsgo:letsgo:try-swarm` | 评估当前需求是否适合采用宿主原生多智能体协同（Codex `multi_agent_v2`、Claude Code `Agent Teams`、Antigravity `swarm`），适合时采用、不适合时不采用，不干预任务执行节奏 |
 | `git-wrap` | `/letsgo:git-wrap` | `$letsgo:letsgo:git-wrap` | 全部任务完成后，仅在显式调用时对涉及的所有 Git 仓库执行英文提交、工作树或任务临时分支向源分支的安全合并与推送，并按安全门槛评估清理工作树与临时分支 |
 

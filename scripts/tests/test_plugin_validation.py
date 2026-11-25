@@ -106,13 +106,13 @@ class PluginValidationTests(unittest.TestCase):
         self.edit(f"{SKILLS}/prove-it/SKILL.md", "disable-model-invocation: true\n", "")
         self.assertRejected("prove-it: must be explicit-only")
 
-    def test_skill_walk_skill_must_link_language(self) -> None:
-        self.edit(f"{SKILLS}/skill-walk/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
-        self.assertRejected("skill-walk: missing route ../letsgo/references/language.md")
+    def test_guide_skill_must_link_language(self) -> None:
+        self.edit(f"{SKILLS}/guide/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
+        self.assertRejected("guide: missing route ../letsgo/references/language.md")
 
-    def test_skill_walk_skill_must_be_explicit(self) -> None:
-        self.edit(f"{SKILLS}/skill-walk/SKILL.md", "disable-model-invocation: true\n", "")
-        self.assertRejected("skill-walk: must be explicit-only")
+    def test_guide_skill_must_be_explicit(self) -> None:
+        self.edit(f"{SKILLS}/guide/SKILL.md", "disable-model-invocation: true\n", "")
+        self.assertRejected("guide: must be explicit-only")
 
     def test_try_swarm_skill_must_link_language(self) -> None:
         self.edit(f"{SKILLS}/try-swarm/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
@@ -141,6 +141,30 @@ class PluginValidationTests(unittest.TestCase):
     def test_old_skill_reference_is_rejected(self) -> None:
         self.append(f"{SKILLS}/letsgo/references/personal-context.md", "\n请调用 letsgo:personal。\n")
         self.assertRejected("legacy reference")
+
+    def test_legacy_skill_walk_reference_is_rejected(self) -> None:
+        self.append(f"{SKILLS}/letsgo/references/personal-context.md", "\n请调用 letsgo:skill-walk。\n")
+        result = self.validate()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            f"legacy reference in {SKILLS}/letsgo/references/personal-context.md: letsgo:skill-walk",
+            result.stdout,
+        )
+
+    def test_legacy_grill_gate_reference_is_rejected(self) -> None:
+        self.append(f"{SKILLS}/letsgo/references/output.md", "\n详见 grill-gate.md。\n")
+        result = self.validate()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            f"legacy reference in {SKILLS}/letsgo/references/output.md: grill-gate.md",
+            result.stdout,
+        )
+
+    def test_legacy_patterns_ignore_docs_and_changelog(self) -> None:
+        self.append("CHANGELOG.md", "\n- 迁移说明：letsgo:skill-walk 与 grill-gate.md。\n")
+        self.append("docs/adr/0026-0.0.8-skills-update.md", "\nletsgo:skill-walk 与 grill-gate.md。\n")
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_private_absolute_home_path_is_rejected(self) -> None:
         self.append(f"{SKILLS}/letsgo/SKILL.md", "\n/Users/example/private-context\n")
