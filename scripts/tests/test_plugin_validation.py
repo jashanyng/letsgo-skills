@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -12,6 +13,12 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+SCRIPTS_DIR = ROOT / "scripts"
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+import validate  # noqa: E402
+
 SKILLS = "plugins/letsgo/skills"
 
 
@@ -277,6 +284,194 @@ class PluginValidationTests(unittest.TestCase):
             encoding="utf-8",
         )
         self.assertRejected(f"## [{version}]")
+
+    def test_repo_doc_broken_link_is_rejected(self) -> None:
+        targets = (
+            ("README.md", "missing-readme.md"),
+            ("AGENTS.md", "missing-agents.md"),
+            ("GLOSSARY.md", "missing-glossary.md"),
+            ("CHANGELOG.md", "missing-changelog.md"),
+            ("docs/authoring.md", "missing-authoring.md"),
+            ("docs/adr/0028-guide-skill-and-rules-update.md", "missing-adr.md"),
+        )
+        for rel, missing in targets:
+            with self.subTest(doc=rel):
+                path = self.fixture / rel
+                original = path.read_text(encoding="utf-8")
+                try:
+                    path.write_text(f"{original}\n[断链]({missing})\n", encoding="utf-8")
+                    self.assertRejected(f"broken link in {rel}: {missing}")
+                finally:
+                    path.write_text(original, encoding="utf-8")
+
+    def test_repo_doc_ignores_links_in_fenced_and_inline_code(self) -> None:
+        snippet = (
+            "\n```markdown\n"
+            "[围栏断链1](missing-fenced-1.md)\n"
+            "```\n\n"
+            "~~~\n"
+            "[围栏断链2](missing-fenced-2.md)\n"
+            "~~~\n\n"
+            "行内示例 `[示例](missing.md)` 与 ``[双反引号示例](missing-inline.md)``。\n"
+        )
+        self.append("README.md", snippet)
+        self.append("docs/authoring.md", snippet)
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_missing_required_repo_doc_is_rejected(self) -> None:
+        for rel in ("AGENTS.md", "GLOSSARY.md"):
+            with self.subTest(missing=rel):
+                path = self.fixture / rel
+                original = path.read_text(encoding="utf-8")
+                try:
+                    path.unlink()
+                    self.assertRejected(f"missing repo doc: {rel}")
+                finally:
+                    path.write_text(original, encoding="utf-8")
+
+    def test_skill_docs_must_mention_all_expected_skills(self) -> None:
+        for rel in ("README.md", "docs/authoring.md", "docs/compatibility.md", "GLOSSARY.md"):
+            with self.subTest(doc=rel):
+                path = self.fixture / rel
+                original = path.read_text(encoding="utf-8")
+                updated = re.sub(r"(?<![A-Za-z0-9_:-])guide(?![A-Za-z0-9_:-])", "removed-item", original)
+                self.assertNotEqual(updated, original)
+                try:
+                    path.write_text(updated, encoding="utf-8")
+                    result = self.validate()
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(f"{rel} is missing expected skills:", result.stdout)
+                    self.assertIn("'guide'", result.stdout)
+                finally:
+                    path.write_text(original, encoding="utf-8")
+
+    def test_skill_doc_letsgo_check_ignores_repo_name_and_prefixed_commands(self) -> None:
+        path = self.fixture / "GLOSSARY.md"
+        original = path.read_text(encoding="utf-8")
+        updated = re.sub(r"(?<![A-Za-z0-9_:-])letsgo(?![A-Za-z0-9_:-])", "other", original)
+        updated += "\n示例命令：/letsgo:guide\n"
+        self.assertIn("letsgo-skills", updated)
+        self.assertIn("/letsgo:guide", updated)
+        path.write_text(updated, encoding="utf-8")
+        self.assertRejected("GLOSSARY.md is missing expected skills: ['letsgo']")
+
+
+class SimpleYamlParserTests(unittest.TestCase):
+    def test_top_level_scalars_and_inline_comments(self) -> None:
+        raw = (
+            "# leading comment\n"
+            "plain: letsgo\n"
+            "tag: foo#bar\n"
+            "commented: value # inline comment\n"
+            'double_colon: "letsgo:guide"\n'
+            'double_escaped: "a\\"b\\\\c\\nd # keep" # trailing comment\n'
+            "single_escaped: 'it''s # ok' # trailing comment\n"
+            "bool_true: true\n"
+            "bool_false: false\n"
+            'quoted_bool: "true"\n'
+            "null_word: null\n"
+            "null_tilde: ~\n"
+            "null_blank:\n"
+            "empty_map: {}\n"
+            "empty_list: []\n"
+        )
+        parsed = validate.parse_simple_yaml(raw)
+        self.assertEqual(
+            parsed,
+            {
+                "plain": "letsgo",
+                "tag": "foo#bar",
+                "commented": "value",
+                "double_colon": "letsgo:guide",
+                "double_escaped": 'a"b\\c\nd # keep',
+                "single_escaped": "it's # ok",
+                "bool_true": True,
+                "bool_false": False,
+                "quoted_bool": "true",
+                "null_word": None,
+                "null_tilde": None,
+                "null_blank": None,
+                "empty_map": {},
+                "empty_list": [],
+            },
+        )
+
+    def test_nested_mappings_and_dedent(self) -> None:
+        raw = (
+            "metadata:\n"
+            '  short-description: "letsgo 基础规则、共用规则与私人资料"\n'
+            "interface:\n"
+            '  display_name: "letsgo: guide"\n'
+            "  details:\n"
+            "    enabled: true\n"
+            "policy:\n"
+            "  allow_implicit_invocation: false\n"
+            "empty_section:\n"
+            "top: done\n"
+        )
+        parsed = validate.parse_simple_yaml(raw)
+        self.assertEqual(
+            parsed,
+            {
+                "metadata": {"short-description": "letsgo 基础规则、共用规则与私人资料"},
+                "interface": {
+                    "display_name": "letsgo: guide",
+                    "details": {"enabled": True},
+                },
+                "policy": {"allow_implicit_invocation": False},
+                "empty_section": None,
+                "top": "done",
+            },
+        )
+
+    def test_block_scalars_and_crlf(self) -> None:
+        raw = (
+            "literal: |\r\n"
+            "  line 1\r\n"
+            "\r\n"
+            "  line 2\r\n"
+            "literal_strip: |-\r\n"
+            "  line a\r\n"
+            "  line b\r\n"
+            "folded: >\r\n"
+            "  hello\r\n"
+            "  world\r\n"
+            "\r\n"
+            "  next para\r\n"
+            "folded_strip: >-\r\n"
+            "  one\r\n"
+            "  two\r\n"
+            "after: ok\r\n"
+        )
+        parsed = validate.parse_simple_yaml(raw)
+        self.assertEqual(
+            parsed,
+            {
+                "literal": "line 1\n\nline 2\n",
+                "literal_strip": "line a\nline b",
+                "folded": "hello world\nnext para\n",
+                "folded_strip": "one two",
+                "after": "ok",
+            },
+        )
+
+    def test_malformed_inputs_raise_value_error(self) -> None:
+        cases = (
+            "a:\n\tb: 1\n",
+            "a:\n    b: 1\n  c: 2\n",
+            "  leading: bad\n",
+            'name: "unclosed\n',
+            "name: 'unclosed\n",
+            'name: "closed" trailing\n',
+            "name: letsgo\n  nested: bad\n",
+            "empty: {}\n  nested: bad\n",
+        )
+        for bad in cases:
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    validate.parse_simple_yaml(bad)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -44,6 +44,17 @@ Codex 总在 `name` 前加插件名，Antigravity 从不加，Claude Code 对 `l
 - 插件包只含通用规则。主机、SSH 别名、私人域名、网络拓扑与产出路径偏好只在用户本机的 `~/.agents/letsgo/personal/`，不写进技能、示例或测试夹具。
 - 新概念先进入 [GLOSSARY.md](../GLOSSARY.md)，难以逆转的取舍用 `docs/adr/` 记录。
 
+## 新增/更名/删除技能核对清单
+
+按操作顺序逐项核对，缺一不可：
+
+1. **技能目录与元数据**：在 `plugins/letsgo/skills/<skill>/` 维护 `SKILL.md`（`name`、`description`、调用开关与必选 `../letsgo/references/...` 路由）及 `agents/openai.yaml`（`display_name`、`short_description`、`allow_implicit_invocation`）；删除或更名时清理旧目录及不再被引用的 `references/` 文件。
+2. **插件清单**：同步更新 `plugins/letsgo/.claude-plugin/plugin.json` 的 `skills` 数组（Codex 读取 `./skills/`、Antigravity 自动发现，无需逐项增删）。
+3. **校验脚本与测试**：更新 `scripts/validate.py` 的 `EXPECTED_SKILLS` 与专属路由校验（如有）；更名或删除技能/规则文件时将废弃名称或路径加入 `LEGACY_PATTERNS` 防止回流；同步更新 `scripts/tests/test_plugin_validation.py`。
+4. **四份同步文档**（`validate.py` 强制校验全部 `EXPECTED_SKILLS` 均出现）：[README.md](../README.md)（技能表与三端调用形式）、`docs/authoring.md`（布局树与命名/调用表）、[docs/compatibility.md](compatibility.md)（清单计数、显式技能列表、依赖边界与历史迁移记录）、[GLOSSARY.md](../GLOSSARY.md)（`letsgo 插件` 技能计数/列表及对应术语）。
+5. **决策与变更记录**：在 `docs/adr/` 新增 ADR 并在被修订的旧 ADR 顶部补充状态说明；在 [CHANGELOG.md](../CHANGELOG.md) 的 `## [Unreleased]` 记入新增/变更/移除与迁移说明。
+6. **验证与发布**：运行 `python3 scripts/validate.py` 与 `python3 -m unittest discover -s scripts/tests` 全绿（可辅以 `agy plugin validate plugins/letsgo`），确认无断链与旧引用残留后再按下方“校验与发布”执行发版与三端同步。
+
 ## 校验与发布
 
 - 编辑只在开发副本进行，不编辑三端的插件缓存。
@@ -58,7 +69,7 @@ Codex 总在 `name` 前加插件名，Antigravity 从不加，Claude Code 对 `l
   - 版本与发版治理规则只保存在仓库根级与 `docs/` 文档，严禁写入 `plugins/letsgo/` 运行时载荷。
 - 发布：修改了 `plugins/letsgo/` 并完成验收后，先提交工作区改动，再运行 `scripts/release.sh x.y.z`（维护者同意修改 `x`/`y` 时传 `scripts/release.sh --allow-xy-bump x.y.z`）同步版本号与市场锁定标签、校验、提交、打标签并推送；仅修改仓库开发文档或脚本、未改动 `plugins/letsgo/` 时无需发版与更新客户端。
 - **同步更新本机三端客户端**：Codex 与 Claude Code 的市场锁定在远程裸 `x.y.z` 标签，每次运行 `scripts/release.sh x.y.z` 发布成功后，必须立即在本仓库根目录下为本机已安装的支持端更新插件并核验版本号一致（若遇到版本重置导致目标版本低于已缓存旧版，须先卸载旧缓存再重装核验）：
-  - **Codex**：`codex plugin marketplace upgrade letsgo-skills && codex plugin add letsgo@letsgo-skills`，再用 `codex plugin list | grep -F 'letsgo@letsgo-skills'` 核验版本为 `x.y.z`（避免裸跑 `codex plugin list` 输出完整远端市场目录）。
+  - **Codex**：`codex plugin marketplace upgrade letsgo-skills && codex plugin add letsgo@letsgo-skills`，再用 `codex plugin list --marketplace letsgo-skills` 核验版本为 `x.y.z`（避免裸跑 `codex plugin list` 输出完整远端市场目录）。
   - **Claude Code**：`claude plugin marketplace update letsgo-skills && claude plugin update letsgo@letsgo-skills`，再用 `claude plugin list | grep -A 3 -F 'letsgo@letsgo-skills'` 核验 `Version` 为 `x.y.z`。
   - **Antigravity**：`agy plugin install plugins/letsgo`（刚完成发布的开发副本即对应 `x.y.z`），再用 `agy plugin list | grep -F 'letsgo'` 核验版本为 `x.y.z`。
   - 本机已安装对应客户端与本插件时，若更新失败或版本号不一致，视为交付未完成并如实报告阻塞原因；未安装某客户端 CLI 或该端尚未安装本插件时跳过并在报告中注明。更新后提示开启新会话生效。

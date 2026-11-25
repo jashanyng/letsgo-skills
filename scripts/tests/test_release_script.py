@@ -51,14 +51,13 @@ class ReleaseScriptTests(unittest.TestCase):
                 symlinks=True,
                 ignore=shutil.ignore_patterns("__pycache__", ".DS_Store", "*.pyc"),
             )
-        for name in ("GLOSSARY.md", "README.md", "AGENTS.md", "CHANGELOG.md"):
+        for name in ("GLOSSARY.md", "README.md", "AGENTS.md"):
             shutil.copy2(ROOT / name, seed / name)
         changelog_path = seed / "CHANGELOG.md"
-        if f"## [{initial_version}]" not in changelog_path.read_text(encoding="utf-8"):
-            changelog_path.write_text(
-                f"# 变更日志（Changelog）\n\n## [Unreleased]\n\n## [{initial_version}]\n\n- 种子版本基线。\n",
-                encoding="utf-8",
-            )
+        changelog_path.write_text(
+            f"# 变更日志（Changelog）\n\n## [Unreleased]\n\n## [{initial_version}]\n\n- 种子版本基线。\n",
+            encoding="utf-8",
+        )
 
         self._set_manifests(seed, initial_version, initial_version)
         self._git(seed, "init", "-b", "main")

@@ -47,7 +47,7 @@
 1. **Codex**：
    ```sh
    codex plugin marketplace upgrade letsgo-skills && codex plugin add letsgo@letsgo-skills
-   codex plugin list | grep -F 'letsgo@letsgo-skills'
+   codex plugin list --marketplace letsgo-skills
    ```
 2. **Claude Code**：
    ```sh
@@ -66,7 +66,7 @@
 
 当发生版本序列重置、导致目标版本数值低于宿主端已安装旧缓存版本时（例如 [ADR-0027](adr/0027-bare-xyz-versioning.md) 将历史 `3.6.0` 重置对齐至 `0.0.10`），直接执行 `update` / `upgrade` 可能无法覆盖更高版本号的旧缓存。此时必须先卸载旧插件并清理缓存，再重新安装并核验版本号：
 
-1. **Codex**：先卸载或移除已安装的 `letsgo@letsgo-skills` 旧版本缓存，更新市场后重新执行 `codex plugin add letsgo@letsgo-skills`，再用 `codex plugin list | grep -F 'letsgo@letsgo-skills'` 确认版本。
+1. **Codex**：先卸载或移除已安装的 `letsgo@letsgo-skills` 旧版本缓存，更新市场后重新执行 `codex plugin add letsgo@letsgo-skills`，再用 `codex plugin list --marketplace letsgo-skills` 确认版本。
 2. **Claude Code**：先执行 `claude plugin uninstall letsgo@letsgo-skills` 清除旧版本缓存，更新市场后重新执行 `claude plugin install letsgo@letsgo-skills`，再用 `claude plugin list | grep -A 3 -F 'letsgo@letsgo-skills'` 确认 `Version` 字段。
 3. **Antigravity**：先执行 `agy plugin uninstall letsgo`（或卸载旧安装项），再执行 `agy plugin install plugins/letsgo` 并通过 `agy plugin list | grep -F 'letsgo'` 确认版本一致。
 

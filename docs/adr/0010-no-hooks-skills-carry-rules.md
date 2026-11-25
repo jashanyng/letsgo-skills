@@ -2,7 +2,7 @@
 
 2026-11-02 决定 letsgo 插件的任何功能都不再通过事件钩子实现，这也是今后版本必须遵守的硬性规定。插件只通过两端安装插件后提供的技能与规则资料生效，不依赖开发仓库：
 
-- 显式技能按相对路径读取 `_rules/`，并各自执行私人资料门禁与[语言约定](../../plugins/letsgo/skills/_rules/spec/references/language.md)。
+- 显式技能按相对路径读取 `_rules/`，并各自执行私人资料门禁与语言约定（当时位于 `plugins/letsgo/skills/_rules/spec/references/language.md`，后经 [ADR-0018](0018-single-skills-directory.md) 迁至 [language.md](../../plugins/letsgo/skills/letsgo/references/language.md)）。
 - 普通对话的通用规则由唯一的隐式技能 `letsgo:conventions` 承载：它的描述列出命中场景，正文指向 `_rules/INDEX.md` 的条件路由；Claude Code 中以 `user-invocable: false` 隐藏于斜杠菜单。
 
 此决策取代 [ADR-0008](0008-plugin-runtime-and-personal-context.md) 中由 `SessionStart` 钩子注入规则入口与会话规则的部分，以及 Claude Code 的 `PostToolBatch` 语言提醒。私人资料门禁的适用范围与目录见 [ADR-0011](0011-classified-personal-context-and-task-gates.md)。
