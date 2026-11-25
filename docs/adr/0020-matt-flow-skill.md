@@ -1,6 +1,6 @@
 # 新增显式技能 matt-flow
 
-> 状态：2026-11-22 更新——路线规划明确按需求现场评估选用“适合的”单个技能或最小必要组合（不预设固定待定分支），门禁输出移除第 4 项“下一步”，Git 收尾引用随 [ADR-0021](0021-conditional-git-delivery.md) 对齐；2026-11-22 新增对照技能 `matt-guide` 并抽取共用规则 `matt-route.md`（[ADR-0024](0024-matt-guide-skill.md)），不再是唯一 matt 入口；2026-11-24 经 [ADR-0026](0026-0.0.8-skills-update.md) 移除 `matt-guide`，`matt-flow` 恢复为唯一的 mattpocock-skills 自动串联入口，`matt-route.md` 回归仅供 `matt-flow` 读取。
+> 状态：2026-11-22 更新——路线规划明确按需求现场评估选用“适合的”单个技能或最小必要组合（不预设固定待定分支），门禁输出移除第 4 项“下一步”，Git 收尾引用随 [ADR-0021](0021-conditional-git-delivery.md) 对齐；2026-11-22 新增对照技能 `matt-guide` 并抽取共用规则 `matt-route.md`（[ADR-0024](0024-matt-guide-skill.md)），不再是唯一 matt 入口；2026-11-24 经 [ADR-0026](0026-0.0.8-skills-update.md) 移除 `matt-guide`，`matt-flow` 恢复为唯一的 mattpocock-skills 自动串联入口，`matt-route.md` 回归仅供 `matt-flow` 读取；2026-11-25 经 [ADR-0028](0028-guide-skill-and-rules-update.md) 放松路线规划措辞，移除“最小必要”等限制性限定语，改为由现场评估推荐合适技能组合。
 
 修订 [ADR-0017](0017-minimal-plugin.md) 中“不引入流程概念、废除第三方技能登记”的部分，以及 [ADR-0019](0019-write-an-article-skill.md) 中技能数量的部分。
 

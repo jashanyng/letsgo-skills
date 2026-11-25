@@ -1,6 +1,6 @@
 # 精简插件：只保留基础规则、私人资料与步进技能
 
-> 状态：技能列表与 `_rules/` 布局已被 [ADR-0018](0018-single-skills-directory.md) 修订；技能数量再经 [ADR-0019](0019-write-an-article-skill.md) 修订；流程概念与第三方技能登记的禁令经 [ADR-0020](0020-matt-flow-skill.md) 为 `matt-flow` 修订；技能数量再经 [ADR-0022](0022-swarm-up-skill.md) 修订；技能数量与共用规则范围再经 [ADR-0024](0024-matt-guide-skill.md) 与 [ADR-0025](0025-git-wrap-skill.md) 修订；技能列表、数量与规则范围再经 [ADR-0026](0026-0.0.8-skills-update.md) 修订（移除 `matt-guide`，`swarm-up` 改为 `try-swarm`，新增 `prove-it`、`skill-walk` 及 `grill-gate.md`，共 10 个技能）。
+> 状态：技能列表与 `_rules/` 布局已被 [ADR-0018](0018-single-skills-directory.md) 修订；技能数量再经 [ADR-0019](0019-write-an-article-skill.md) 修订；流程概念与第三方技能登记的禁令经 [ADR-0020](0020-matt-flow-skill.md) 为 `matt-flow` 修订；技能数量再经 [ADR-0022](0022-swarm-up-skill.md) 修订；技能数量与共用规则范围再经 [ADR-0024](0024-matt-guide-skill.md) 与 [ADR-0025](0025-git-wrap-skill.md) 修订；技能列表、数量与规则范围再经 [ADR-0026](0026-0.0.8-skills-update.md) 修订（移除 `matt-guide`，`swarm-up` 改为 `try-swarm`，新增 `prove-it`、`skill-walk` 及 `grill-gate.md`，共 10 个技能）；技能列表与规则范围再经 [ADR-0028](0028-guide-skill-and-rules-update.md) 修订（`skill-walk` 升级更名为 `guide`，移除 `grill-gate.md`，仍为 10 个技能）。
 
 取代 [ADR-0012](0012-task-types-delivery-and-flow.md) 与 [ADR-0013](0013-verification-depth-choice.md)，并修订 [ADR-0016](0016-support-antigravity.md) 中关于主入口与技能数量的部分。
 
