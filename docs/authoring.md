@@ -56,7 +56,7 @@ Codex 总在 `name` 前加插件名，Antigravity 从不加，Claude Code 对 `l
   - 版本与发版治理规则只保存在仓库根级与 `docs/` 文档，严禁写入 `plugins/letsgo/` 运行时载荷。
 - 发布：修改了 `plugins/letsgo/` 并完成验收后，先提交工作区改动，再运行 `scripts/release.sh x.y.z`（维护者同意修改 `x`/`y` 时传 `scripts/release.sh --allow-xy-bump x.y.z`）同步版本号与市场锁定标签、校验、提交、打标签并推送；仅修改仓库开发文档或脚本、未改动 `plugins/letsgo/` 时无需发版与更新客户端。
 - **同步更新本机三端客户端**：Codex 与 Claude Code 的市场锁定在远程裸 `x.y.z` 标签，每次运行 `scripts/release.sh x.y.z` 发布成功后，必须立即在本仓库根目录下为本机已安装的支持端更新插件并核验版本号一致（若遇到版本重置导致目标版本低于已缓存旧版，须先卸载旧缓存再重装核验）：
-  - **Codex**：`codex plugin marketplace upgrade letsgo-skills && codex plugin add letsgo@letsgo-skills`，再用 `codex plugin list` 核验 `letsgo@letsgo-skills` 版本为 `x.y.z`。
-  - **Claude Code**：`claude plugin marketplace update letsgo-skills && claude plugin update letsgo@letsgo-skills`，再用 `claude plugin list` 核验 `letsgo@letsgo-skills` 版本为 `x.y.z`。
-  - **Antigravity**：`agy plugin install plugins/letsgo`（刚完成发布的开发副本即对应 `x.y.z`），再用 `agy plugin list` 核验 `letsgo` 版本为 `x.y.z`。
+  - **Codex**：`codex plugin marketplace upgrade letsgo-skills && codex plugin add letsgo@letsgo-skills`，再用 `codex plugin list | grep -F 'letsgo@letsgo-skills'` 核验版本为 `x.y.z`（避免裸跑 `codex plugin list` 输出完整远端市场目录）。
+  - **Claude Code**：`claude plugin marketplace update letsgo-skills && claude plugin update letsgo@letsgo-skills`，再用 `claude plugin list | grep -A 3 -F 'letsgo@letsgo-skills'` 核验 `Version` 为 `x.y.z`。
+  - **Antigravity**：`agy plugin install plugins/letsgo`（刚完成发布的开发副本即对应 `x.y.z`），再用 `agy plugin list | grep -F 'letsgo'` 核验版本为 `x.y.z`。
   - 本机已安装对应客户端与本插件时，若更新失败或版本号不一致，视为交付未完成并如实报告阻塞原因；未安装某客户端 CLI 或该端尚未安装本插件时跳过并在报告中注明。更新后提示开启新会话生效。
