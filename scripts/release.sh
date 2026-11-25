@@ -28,9 +28,8 @@ for arg in "$@"; do
 done
 
 [ -n "$VERSION" ] || fail "用法：scripts/release.sh [--allow-xy-bump] x.y.z"
-TAG="$VERSION"
 printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "版本号必须是无 v 前缀的裸 x.y.z 形式：$VERSION"
-git rev-parse -q --verify "refs/tags/$TAG" >/dev/null && fail "标签 $TAG 已存在。"
+git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null && fail "标签 $VERSION 已存在。"
 [ -z "$(git status --porcelain)" ] || fail "工作区有未提交的改动，请先提交或清理。"
 
 CURRENT=$(python3 -c 'import json; from pathlib import Path; print(json.loads(Path("plugins/letsgo/.claude-plugin/plugin.json").read_text(encoding="utf-8")).get("version", ""))')
@@ -74,11 +73,11 @@ if last_bare:
         sys.exit(1)
 PY
 
-python3 - "$VERSION" "$TAG" <<'PY'
+python3 - "$VERSION" <<'PY'
 import json, sys
 from pathlib import Path
 
-version, tag = sys.argv[1], sys.argv[2]
+version = sys.argv[1]
 for path in (
     "plugins/letsgo/.claude-plugin/plugin.json",
     "plugins/letsgo/.codex-plugin/plugin.json",
@@ -91,15 +90,15 @@ for path in (".claude-plugin/marketplace.json", ".agents/plugins/marketplace.jso
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     for plugin in data["plugins"]:
         if plugin["name"] == "letsgo":
-            plugin["source"]["ref"] = tag
+            plugin["source"]["ref"] = version
     Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 PY
 
 python3 scripts/validate.py || { git checkout -- .; fail "校验未通过，已撤销版本号改动。"; }
 
 git add -A
-git commit -m "release: $TAG"
-git tag -a "$TAG" -m "letsgo $TAG"
+git commit -m "release: $VERSION"
+git tag -a "$VERSION" -m "letsgo $VERSION"
 git push origin HEAD
-git push origin "$TAG"
-printf '已发布 %s。请通过 Codex、Claude Code 和 Antigravity 的插件管理器更新。\n' "$TAG"
+git push origin "$VERSION"
+printf '已发布 %s。请通过 Codex、Claude Code 和 Antigravity 的插件管理器更新。\n' "$VERSION"
