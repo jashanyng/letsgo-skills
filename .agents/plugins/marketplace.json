@@ -10,7 +10,7 @@
         "source": "git-subdir",
         "url": "git@github.com:jashanyng/letsgo-skills.git",
         "path": "./plugins/letsgo",
-        "ref": "3.6.1"
+        "ref": "0.0.10"
       },
       "policy": {
         "installation": "AVAILABLE",
