@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### 新增
+
+- **沉淀 `try-swarm` 协作约定**：在 `plugins/letsgo/skills/try-swarm/SKILL.md` 中新增防 stall 误报（worker 发起预计超 1 分钟的后台长任务前先发不含 `@` 的简短状态备忘，coordinator 遇 monitor 的 `[stall]` 通知先核查活跃成员与后台长任务再决定是否干预）与大型跨仓并行审查（≥3 个大型多端仓并行推进时推荐拆分 2 位独立 verifier 分流）两条协同约定。
+
 ## [0.0.11] - 2026-11-25
 
 ### 变更
