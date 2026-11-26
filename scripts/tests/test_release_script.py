@@ -40,7 +40,7 @@ class ReleaseScriptTests(unittest.TestCase):
         base = Path(temp.name)
         origin = base / "origin.git"
         work = base / "work"
-        subprocess.run(["git", "init", "--bare", str(origin)], check=True, capture_output=True, text=True)
+        subprocess.run(["git", "init", "--bare", "-b", "main", str(origin)], check=True, capture_output=True, text=True)
 
         seed = base / "seed"
         seed.mkdir()
