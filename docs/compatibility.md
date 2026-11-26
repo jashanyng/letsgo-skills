@@ -21,10 +21,10 @@
 
 ### 依赖前置与运行边界
 
-- **`mattpocock-skills` 前置要求**：显式技能 `matt-flow` 借助 `ask-matt` 选用并串联 `mattpocock-skills` 技能，调用前需在本机对应宿主端已安装 `mattpocock-skills`。
-- **`guide` 能力评估与宿主市场推荐边界**：`guide` 仅基于会话已载入能力清单及入围候选的 `SKILL.md` / MCP Schema 现场评估，不创建持久化能力索引文件；指定范围内未生效的能力不凭记忆执行。缺少必要支持时优先检索宿主自带市场（Antigravity 使用 `search_marketplace`，Claude Code 与 Codex 查询插件市场；若已安装 `find-skills` 则配合使用，必要时联网检索），且只报告名称、用途、安装方式及替代做法，不自行安装。
+- **`mattpocock-skills` 前置要求与多工单极简提示词**：显式技能 `matt-flow` 借助 `ask-matt` 选用并串联 `mattpocock-skills` 技能，调用前需在本机对应宿主端已安装 `mattpocock-skills`；进入多工单实施前按 `orchestration.md` 在 `/implement-spec`、1 个宿主原生多智能体协调会话与逐单新会话中择优，门禁处输出最小上下文指针提示词（进入单一实施形态时直接给三端原生极简指令，不前置 `letsgo:matt-flow`）。
+- **`guide` 能力评估、触发标签与宿主市场推荐边界**：`guide` 仅基于会话已载入能力清单及入围候选的 `SKILL.md` / MCP Schema 现场评估，不创建持久化能力索引文件；过程说明行按实读元数据与激活途径标注 6 类触发标签（`可隐式`、`仅显式`、`仅隐式`、`内部路由`、`MCP 直调`、`内置工具`），任何停下等待用户确认、授权或接力的节点均给出极简可复制代码块提示词，收尾给出简洁复盘与独立复用参考代码块。指定范围内未生效的能力不凭记忆执行；缺少必要支持时优先检索宿主自带市场（Antigravity 使用 `search_marketplace`，Claude Code 与 Codex 查询插件市场；若已安装 `find-skills` 则配合使用，必要时联网检索），且只报告名称、用途、安装方式及替代做法，不自行安装。
 - **无事件钩子硬性边界**（[ADR-0010](adr/0010-no-hooks-skills-carry-rules.md)）：`letsgo` 插件不使用任何宿主生命周期事件钩子，拒绝 `hooks/`、`rules/` 目录及清单/前置元数据中的 `hooks` 字段，由 `scripts/validate.py` 机械拦截。
-- **多智能体协同映射**：`try-swarm` 按宿主端原生能力评估与触发——Codex 对应 `multi_agent_v2`、Claude Code 对应 `Agent Teams`、Antigravity 对应 `swarm`。
+- **多智能体协同映射与编排器互斥**：`try-swarm` 按宿主端原生能力评估与触发——Codex 对应 `multi_agent_v2`、Claude Code 对应 `Agent Teams`、Antigravity 对应 `swarm`；若同时指定了 `implement-spec`、`run_workflow` 等同类编排器，严禁叠加并按 `orchestration.md` 现场择优选一且提示避免下次重复叠加。
 - **本机私人资料隔离**：宿主主机、SSH、域名与默认产出目录等私人事实仅保存于当前用户本机 `~/.agents/letsgo/personal/`（入口为 `index.md`），交付文章等产出存放在 `~/.agents/letsgo/generated/`；安装或升级插件本身不会创建用户目录，也不会改写用户的全局 `AGENTS.md`、`CLAUDE.md` 或客户端配置文件。
 
 ## 演进阶段与版本兼容契约
@@ -74,6 +74,7 @@
 
 | 迁移节点 | 变更与重映射说明 | 参考决策 |
 | --- | --- | --- |
+| `0.0.13`（2026-11-26） | 新增共用规则 `orchestration.md`（多工单实施三档择优、编排器互斥择优选一与三端极简提示词规范），`matt-flow` 实施类新会话提示词脱离前置前缀并改为最小上下文指针，`guide` 规范 6 类触发标签与停下必给极简接力代码块、收尾给出简洁复盘 | [ADR-0029](adr/0029-minimal-prompts-and-orchestrator-choice.md) |
 | `0.0.11`（2026-11-25） | 将 `skill-walk` 更名并扩展为 `guide`（覆盖 skill、MCP 与内置工具），移除 `grill-gate.md` 隐式门禁并放松 `matt-flow` 选型措辞；原 `/letsgo:skill-walk`（Codex `$letsgo:letsgo:skill-walk`）迁移至 `/letsgo:guide`（Codex `$letsgo:letsgo:guide`），需要拷问收敛后停下可在调用时显式声明 | [ADR-0028](adr/0028-guide-skill-and-rules-update.md) |
 | `0.0.10`（2026-11-25） | 废弃历史带 `v` 前缀标签与 `3.x` 编号序列（原 `v1.0.8` 与 `3.0.0`–`3.6.0` 按演进节点重映射为 `0.0.1`–`0.0.8`，身份迁移后版本记为 `0.0.9`），统一切换为裸 `x.y.z` 标签并从 `0.0.10` 续接；从旧版升级需按上节先卸载旧缓存再重装 | [ADR-0027](adr/0027-bare-xyz-versioning.md) |
 | `0.0.8`（2026-11-24） | 移除 `matt-guide`、将 `swarm-up` 重命名为 `try-swarm`（不再干预任务节奏），新增 `prove-it`、`skill-walk` 与 `grill-gate.md` 收敛门禁，技能数由 9 个增至 10 个 | [ADR-0026](adr/0026-0.0.8-skills-update.md) |

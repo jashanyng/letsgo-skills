@@ -21,10 +21,10 @@
 | `stepping-doit` | `/letsgo:stepping-doit` | `$letsgo:letsgo:stepping-doit` | 由智能体执行当前步骤，并展示下一步 |
 | `stepping-finish` | `/letsgo:stepping-finish` | `$letsgo:letsgo:stepping-finish` | 由智能体完成全部剩余步骤 |
 | `write-an-article` | `/letsgo:write-an-article` | `$letsgo:letsgo:write-an-article` | 按主题（未给主题时整理当前对话）生成一篇作为 Obsidian 笔记的文章，存放到私人资料指定的目录 |
-| `matt-flow` | `/letsgo:matt-flow` | `$letsgo:letsgo:matt-flow` | 写在消息开头、后接需求（Antigravity 只识别开头的命令），借助 `ask-matt` 现场评估并推荐适合的 mattpocock-skills 技能或技能组合，自动串联无需判断的步骤，在门禁处给出可直接使用的提示词；需已安装 mattpocock-skills |
+| `matt-flow` | `/letsgo:matt-flow` | `$letsgo:letsgo:matt-flow` | 写在消息开头、后接需求（Antigravity 只识别开头的命令），借助 `ask-matt` 现场评估并推荐适合的 mattpocock-skills 技能或技能组合，自动串联无需判断的步骤，进入多工单实施前按 `orchestration.md` 择优并在门禁处给出极简可复制的代码块提示词（实施类新会话直接给原生指令）；需已安装 mattpocock-skills |
 | `prove-it` | `/letsgo:prove-it` | `$letsgo:letsgo:prove-it` | 对当前改动现场评估适合的测试验收层度与方法，给出推荐、轻量、深度三个选项供用户选择后实施 |
-| `guide` | `/letsgo:guide` | `$letsgo:letsgo:guide` | 按需求在能力范围或当前宿主全部能力中现场评估适合的 skill、MCP 与内置工具，推进实施、为需显式调用的技能给出可复制代码块提示词（调用时显式授权可代为执行），或在缺失支持时检索宿主市场只报告不安装 |
-| `try-swarm` | `/letsgo:try-swarm` | `$letsgo:letsgo:try-swarm` | 评估当前需求是否适合采用宿主原生多智能体协同（Codex `multi_agent_v2`、Claude Code `Agent Teams`、Antigravity `swarm`），适合时采用、不适合时不采用，不干预任务执行节奏 |
+| `guide` | `/letsgo:guide` | `$letsgo:letsgo:guide` | 按需求在能力范围或当前宿主全部能力中现场评估适合的 skill、MCP 与内置工具，标注 6 类触发标签并推进，任何停下节点给出极简接力代码块（调用时显式授权可代跑），收尾输出简洁复盘与独立复用参考代码块；缺失支持时检索宿主市场只报告不安装 |
+| `try-swarm` | `/letsgo:try-swarm` | `$letsgo:letsgo:try-swarm` | 评估当前需求是否适合采用宿主原生多智能体协同（Codex `multi_agent_v2`、Claude Code `Agent Teams`、Antigravity `swarm`），遇同类编排器时现场择优选一并提示避坑，不干预任务执行节奏 |
 | `git-wrap` | `/letsgo:git-wrap` | `$letsgo:letsgo:git-wrap` | 全部任务完成后，仅在显式调用时对涉及的所有 Git 仓库执行英文提交、工作树或任务临时分支向源分支的安全合并与推送，并按安全门槛评估清理工作树与临时分支 |
 
 Codex 总在技能名前加插件名，所以 stepping 在 Codex 中多一层 `letsgo:`；菜单仍显示为 `letsgo: stepping begin` 等，输入 `$stepping` 即可找到。`letsgo` 是隐式技能，命中不能保证每次触发；它在 Claude Code 斜杠菜单中隐藏，Codex 与 Antigravity 没有隐藏机制，手动提到它时只会加载规则。私人资料只保存在用户本机，安装本身不创建任何用户目录。

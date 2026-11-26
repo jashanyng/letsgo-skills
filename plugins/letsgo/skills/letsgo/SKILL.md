@@ -21,4 +21,4 @@ metadata:
 | 覆盖、替换或删除已有产物；以附件、旧文件或脚本输出为依据 | [变更安全](references/change-safety.md) |
 | 完成故障修复后报告 | [故障报告](references/fault-report.md) |
 
-缺少私人资料不阻止普通对话。`references/stepping/` 只供 `stepping-*` 技能读取，`references/matt-route.md` 只供 `matt-flow` 读取。
+缺少私人资料不阻止普通对话。`references/stepping/` 只供 `stepping-*` 技能读取，`references/matt-route.md` 只供 `matt-flow` 读取，`references/orchestration.md` 供 `matt-flow` 与 `try-swarm` 共用。

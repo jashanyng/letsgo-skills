@@ -35,6 +35,11 @@ EXPLICIT_ROUTES = ("../letsgo/references/language.md",)
 MATT_ROUTES = (
     "../letsgo/references/language.md",
     "../letsgo/references/matt-route.md",
+    "../letsgo/references/orchestration.md",
+)
+TRY_SWARM_ROUTES = (
+    "../letsgo/references/language.md",
+    "../letsgo/references/orchestration.md",
 )
 STEPPING_ROUTES = (
     "../letsgo/references/language.md",
@@ -411,6 +416,8 @@ def check_skills(errors: list[str]) -> None:
             routes = STEPPING_ROUTES
         elif skill == "matt-flow":
             routes = MATT_ROUTES
+        elif skill == "try-swarm":
+            routes = TRY_SWARM_ROUTES
         else:
             routes = EXPLICIT_ROUTES
         for route in routes:

@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### 新增
+
+- **多工单编排与极简提示词共用规则（`references/orchestration.md`）**（[ADR-0029](docs/adr/0029-minimal-prompts-and-orchestrator-choice.md)）：建立 `matt-flow` 与 `try-swarm` 共用的三档实施形态择优规范（单仓任务图用 `/implement-spec`，跨仓／含人工门禁／需协调板用 1 个宿主原生多智能体协调会话，独立小单或需逐单深度把关才拆新会话），禁止建议同时手动开启多个带阻塞依赖的顶层会话。
+
+### 变更
+
+- **极简提示词与脱离 `matt-flow` 前缀**（[ADR-0029](docs/adr/0029-minimal-prompts-and-orchestrator-choice.md)）：`matt-flow` 在门禁与新会话提示词采用最小上下文指针原则（通常 1 行，不抄写工单、spec、handoff 或 `AGENTS.md` 已有信息，依赖与门禁提醒放在代码块外）；进入单一实施形态的新会话按当前宿主直接输出原生极简指令，不再前置 `letsgo:matt-flow`。
+- **`try-swarm` 编排器互斥择优选一**（[ADR-0029](docs/adr/0029-minimal-prompts-and-orchestrator-choice.md)）：当同时指定 `implement-spec`、`run_workflow` 等同类编排器时，禁止叠加并现场择优选一，在极简报告末尾提示避免下次重复叠加；选原生机制替代时禁止 worker 套娃调用原编排器。
+- **`guide` 触发标签与停下接力代码块规范**（[ADR-0029](docs/adr/0029-minimal-prompts-and-orchestrator-choice.md)）：过程说明行按实读元数据标注 6 类触发标签（`可隐式`、`仅显式`、`仅隐式`、`内部路由`、`MCP 直调`、`内置工具`）；任何停下等待确认、授权或接力的节点均给出极简可复制代码块提示词，直接推进时不插播示范代码块；收尾输出简洁复盘总结与独立复用参考提示词代码块。
+
 ## [0.0.12] - 2026-11-26
 
 ### 新增

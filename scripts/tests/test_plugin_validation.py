@@ -105,6 +105,10 @@ class PluginValidationTests(unittest.TestCase):
         self.edit(f"{SKILLS}/matt-flow/SKILL.md", "(../letsgo/references/matt-route.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("matt-flow: missing route ../letsgo/references/matt-route.md")
 
+    def test_matt_flow_skill_must_link_orchestration(self) -> None:
+        self.edit(f"{SKILLS}/matt-flow/SKILL.md", "(../letsgo/references/orchestration.md)", "(../letsgo/SKILL.md)")
+        self.assertRejected("matt-flow: missing route ../letsgo/references/orchestration.md")
+
     def test_prove_it_skill_must_link_language(self) -> None:
         self.edit(f"{SKILLS}/prove-it/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("prove-it: missing route ../letsgo/references/language.md")
@@ -124,6 +128,10 @@ class PluginValidationTests(unittest.TestCase):
     def test_try_swarm_skill_must_link_language(self) -> None:
         self.edit(f"{SKILLS}/try-swarm/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("try-swarm: missing route ../letsgo/references/language.md")
+
+    def test_try_swarm_skill_must_link_orchestration(self) -> None:
+        self.edit(f"{SKILLS}/try-swarm/SKILL.md", "(../letsgo/references/orchestration.md)", "(../letsgo/SKILL.md)")
+        self.assertRejected("try-swarm: missing route ../letsgo/references/orchestration.md")
 
     def test_try_swarm_skill_must_be_explicit(self) -> None:
         self.edit(f"{SKILLS}/try-swarm/SKILL.md", "disable-model-invocation: true\n", "")
