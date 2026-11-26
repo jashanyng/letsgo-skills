@@ -1,6 +1,6 @@
 {
   "name": "letsgo",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "步进指导（stepping）、文章生成（write an article）、matt 技能流（matt flow）、测试验收（prove it）、引导实施（guide）、多智能体协同（try swarm）、Git 收尾（git wrap）与基础规则技能 letsgo（含私人资料设置）；私人资料由用户在本机配置。",
   "author": {
     "name": "Jashan Yang",

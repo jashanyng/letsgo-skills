@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.0.13] - 2026-11-26
+
 ### 新增
 
 - **多工单编排与极简提示词共用规则（`references/orchestration.md`）**（[ADR-0029](docs/adr/0029-minimal-prompts-and-orchestrator-choice.md)）：建立 `matt-flow` 与 `try-swarm` 共用的三档实施形态择优规范（单仓任务图用 `/implement-spec`，跨仓／含人工门禁／需协调板用 1 个宿主原生多智能体协调会话，独立小单或需逐单深度把关才拆新会话），禁止建议同时手动开启多个带阻塞依赖的顶层会话。
