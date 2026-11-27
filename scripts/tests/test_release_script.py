@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -51,7 +52,7 @@ class ReleaseScriptTests(unittest.TestCase):
                 symlinks=True,
                 ignore=shutil.ignore_patterns("__pycache__", ".DS_Store", "*.pyc"),
             )
-        for name in ("GLOSSARY.md", "README.md", "AGENTS.md"):
+        for name in ("GLOSSARY.md", "README.md", "AGENTS.md", ".gitignore"):
             shutil.copy2(ROOT / name, seed / name)
         changelog_path = seed / "CHANGELOG.md"
         changelog_path.write_text(
@@ -91,13 +92,19 @@ class ReleaseScriptTests(unittest.TestCase):
                     plugin["source"]["ref"] = ref
             path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    def _run_release(self, work: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    def _run_release(self, work: Path, *args: str, skip_tests: bool = True) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        if skip_tests:
+            env["LETSGO_RELEASE_SKIP_TESTS"] = "1"
+        else:
+            env.pop("LETSGO_RELEASE_SKIP_TESTS", None)
         return subprocess.run(
             ["sh", "scripts/release.sh", *args],
             cwd=work,
             text=True,
             capture_output=True,
             check=False,
+            env=env,
         )
 
     def _assert_clean(self, work: Path) -> None:
@@ -269,6 +276,23 @@ class ReleaseScriptTests(unittest.TestCase):
             [sys.executable, "scripts/validate.py"], cwd=work, text=True, capture_output=True, check=False
         )
         self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+
+    def test_release_blocks_and_rolls_back_when_unit_tests_fail(self) -> None:
+        _, work = self._create_repo("0.0.10", "0.0.10")
+        tests_dir = work / "scripts" / "tests"
+        for test_file in tests_dir.glob("test_*.py"):
+            test_file.unlink()
+        (tests_dir / "test_failing_gate.py").write_text(
+            "import unittest\n\n\nclass FailingGateTest(unittest.TestCase):\n    def test_boom(self) -> None:\n        self.fail('boom')\n",
+            encoding="utf-8",
+        )
+        self._git(work, "add", "-A")
+        self._git(work, "commit", "-m", "test: add failing gate")
+
+        result = self._run_release(work, "0.0.11", skip_tests=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("单元测试未通过", result.stderr)
+        self._assert_clean(work)
 
 
 if __name__ == "__main__":

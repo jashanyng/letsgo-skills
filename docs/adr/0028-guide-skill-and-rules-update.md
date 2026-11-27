@@ -1,6 +1,6 @@
-> 状态：其中关于 `guide` 触发方式标签、停下必给极简接力代码块及收尾复盘规则已由 [ADR-0029](0029-minimal-prompts-and-orchestrator-choice.md) 修订。
-
 # 升级 skill-walk 为 guide、移除拷问收敛门禁并放松 matt-flow 选型措辞
+
+> 状态：其中关于 `guide` 触发方式标签、停下必给极简接力代码块及收尾复盘规则已由 [ADR-0029](0029-minimal-prompts-and-orchestrator-choice.md) 修订。
 
 修订 [ADR-0017](0017-minimal-plugin.md)、[ADR-0020](0020-matt-flow-skill.md) 与 [ADR-0026](0026-0.0.8-skills-update.md) 中关于 `skill-walk`、`grill-gate.md` 与 `matt-flow` 选型约束的部分；插件技能总数保持 10 个（隐式技能 `letsgo` + 9 个显式技能），计划发布为 `0.0.11`。
 

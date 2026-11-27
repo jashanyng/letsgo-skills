@@ -2,6 +2,7 @@
 # 发布 letsgo 插件的新版本：同步版本号与市场锁定的裸 x.y.z 标签，校验，提交，打标签并推送。
 # 用法：scripts/release.sh [--allow-xy-bump] x.y.z
 # 默认仅允许递增 z；修改 x 或 y 须经维护者同意并显式传入 --allow-xy-bump。
+# 环境变量：LETSGO_RELEASE_SKIP_TESTS=1 仅为单测防重入递归守卫，常规发版勿设。
 
 set -eu
 
@@ -9,6 +10,14 @@ REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$REPO_ROOT"
 
 fail() { printf '错误：%s\n' "$1" >&2; exit 1; }
+
+rollback_and_fail() {
+  git checkout -- .
+  if [ -n "${1:-}" ]; then
+    fail "$1"
+  fi
+  exit 1
+}
 
 ALLOW_XY_BUMP=0
 VERSION=""
@@ -94,9 +103,12 @@ for path in (".claude-plugin/marketplace.json", ".agents/plugins/marketplace.jso
     Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 PY
 
-python3 scripts/changelog_guard.py archive "$VERSION" || { git checkout -- .; exit 1; }
+python3 -B scripts/changelog_guard.py archive "$VERSION" || rollback_and_fail ""
 
-python3 scripts/validate.py || { git checkout -- .; fail "校验未通过，已撤销版本号改动。"; }
+python3 -B scripts/validate.py || rollback_and_fail "校验未通过，已撤销版本号改动。"
+if [ "${LETSGO_RELEASE_SKIP_TESTS:-0}" != "1" ]; then
+  LETSGO_RELEASE_SKIP_TESTS=1 python3 -B -m unittest discover -s scripts/tests || rollback_and_fail "单元测试未通过，已撤销版本号改动。"
+fi
 
 git add -A
 git commit -m "release: $VERSION"

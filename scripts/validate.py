@@ -341,10 +341,17 @@ def expected_display(skill: str) -> str:
     return RULES_SKILL if skill == RULES_SKILL else f"letsgo: {skill.replace('-', ' ')}"
 
 
-def check_manifests(errors: list[str]) -> None:
-    claude = load_json(PLUGIN / ".claude-plugin" / "plugin.json", errors)
-    codex = load_json(PLUGIN / ".codex-plugin" / "plugin.json", errors)
-    antigravity = load_json(PLUGIN / ".antigravity-plugin" / "plugin.json", errors)
+def _plugin_paths(root: Path) -> tuple[Path, Path]:
+    """Return the letsgo plugin directory and its skills directory under root."""
+    plugin = root / "plugins" / "letsgo"
+    return plugin, plugin / "skills"
+
+
+def check_manifests(errors: list[str], root: Path = ROOT) -> None:
+    plugin, skills = _plugin_paths(root)
+    claude = load_json(plugin / ".claude-plugin" / "plugin.json", errors)
+    codex = load_json(plugin / ".codex-plugin" / "plugin.json", errors)
+    antigravity = load_json(plugin / ".antigravity-plugin" / "plugin.json", errors)
     version = claude.get("version")
     if version != codex.get("version") or version != antigravity.get("version"):
         errors.append(
@@ -361,14 +368,14 @@ def check_manifests(errors: list[str]) -> None:
     if codex.get("skills") != "./skills/":
         errors.append(f"codex plugin.json skills must be ./skills/, found {codex.get('skills')}")
     listed = {Path(p).name for p in claude.get("skills", [])}
-    actual = {p.parent.name for p in SKILLS.glob("*/SKILL.md")}
+    actual = {p.parent.name for p in skills.glob("*/SKILL.md")}
     if listed != actual:
         errors.append(f"claude plugin.json skills {sorted(listed)} != skill dirs {sorted(actual)}")
-    for market in (ROOT / ".claude-plugin" / "marketplace.json", ROOT / ".agents" / "plugins" / "marketplace.json"):
+    for market in (root / ".claude-plugin" / "marketplace.json", root / ".agents" / "plugins" / "marketplace.json"):
         data = load_json(market, errors)
         refs = [p["source"].get("ref") for p in data.get("plugins", []) if p.get("name") == "letsgo"]
         if refs != [version]:
-            errors.append(f"{market.relative_to(ROOT)} must pin letsgo to {version}, found {refs}")
+            errors.append(f"{market.relative_to(root)} must pin letsgo to {version}, found {refs}")
 
 
 def _mapping_section(meta: dict, section: str, skill: str, errors: list[str]) -> dict:
@@ -379,19 +386,20 @@ def _mapping_section(meta: dict, section: str, skill: str, errors: list[str]) ->
     return raw or {}
 
 
-def check_skills(errors: list[str]) -> None:
+def check_skills(errors: list[str], root: Path = ROOT) -> None:
+    plugin, skills = _plugin_paths(root)
     for retired in ("skills-codex", "skills/_rules"):
-        if (PLUGIN / retired).exists():
+        if (plugin / retired).exists():
             errors.append(f"retired directory must not exist: plugins/letsgo/{retired}")
-    dirs = {p.name for p in SKILLS.iterdir() if p.is_dir()}
+    dirs = {p.name for p in skills.iterdir() if p.is_dir()}
     if dirs != EXPECTED_SKILLS:
         errors.append(f"skills must be exactly {sorted(EXPECTED_SKILLS)}, found {sorted(dirs)}")
-    for path in SKILLS.rglob("*"):
-        rel = path.relative_to(SKILLS).parts
+    for path in skills.rglob("*"):
+        rel = path.relative_to(skills).parts
         allowed = (path.name == "SKILL.md" and len(rel) == 2) or (rel[1:] == ("agents", "openai.yaml"))
         if path.name in {"SKILL.md", "openai.yaml"} and not allowed:
-            errors.append(f"nested discoverable metadata: {path.relative_to(ROOT)}")
-    for skill_md in sorted(SKILLS.glob("*/SKILL.md")):
+            errors.append(f"nested discoverable metadata: {path.relative_to(root)}")
+    for skill_md in sorted(skills.glob("*/SKILL.md")):
         skill = skill_md.parent.name
         fm = frontmatter(skill_md, errors)
         if fm.get("name") != expected_name(skill):
@@ -423,50 +431,93 @@ def check_skills(errors: list[str]) -> None:
         for route in routes:
             if route not in links:
                 errors.append(f"{skill}: missing route {route}")
+    _check_reference_reachability(skills, errors, root)
 
 
-def check_markdown_links(path: Path, errors: list[str], text: str | None = None) -> None:
+def _extract_local_markdown_links(path: Path, text: str | None = None) -> list[tuple[str, Path]]:
+    """Extract relative local markdown links outside fenced and inline code."""
     content = path.read_text(encoding="utf-8") if text is None else text
     masked = changelog_guard.mask_fenced_code_blocks(content)
     masked = INLINE_CODE.sub("", masked)
+    links: list[tuple[str, Path]] = []
     for target in LINK.findall(masked):
         if "://" in target or target.startswith(("mailto:", "tel:", "~")):
             continue
-        if not (path.parent / target).resolve().exists():
-            errors.append(f"broken link in {path.relative_to(ROOT)}: {target}")
+        links.append((target, (path.parent / target).resolve()))
+    return links
 
 
-def check_text(errors: list[str]) -> None:
-    for path in sorted(SKILLS.rglob("*")):
+def _check_reference_reachability(skills: Path, errors: list[str], root: Path) -> None:
+    """Verify every markdown doc under letsgo/references/ is reachable from at least one SKILL.md."""
+    skills_resolved = skills.resolve()
+    queue = [p.resolve() for p in sorted(skills.glob("*/SKILL.md"))]
+    reachable: set[Path] = set(queue)
+    while queue:
+        current = queue.pop(0)
+        if not current.is_file() or current.suffix != ".md":
+            continue
+        for _, resolved_target in _extract_local_markdown_links(current):
+            try:
+                resolved_target.relative_to(skills_resolved)
+            except ValueError:
+                continue
+            if resolved_target.is_file() and resolved_target.suffix == ".md" and resolved_target not in reachable:
+                reachable.add(resolved_target)
+                queue.append(resolved_target)
+    references_dir = skills / RULES_SKILL / "references"
+    if references_dir.is_dir():
+        for ref in sorted(references_dir.rglob("*.md")):
+            if ref.resolve() not in reachable:
+                errors.append(f"orphan reference doc (unreachable from any SKILL.md): {ref.relative_to(root)}")
+
+
+def check_markdown_links(path: Path, errors: list[str], text: str | None = None, root: Path = ROOT) -> None:
+    for target, resolved in _extract_local_markdown_links(path, text=text):
+        if not resolved.exists():
+            errors.append(f"broken link in {path.relative_to(root)}: {target}")
+
+
+def check_text(errors: list[str], root: Path = ROOT) -> None:
+    _, skills = _plugin_paths(root)
+    for path in sorted(skills.rglob("*")):
         if path.is_symlink():
-            errors.append(f"symlink in plugin payload (Codex ignores symlinks): {path.relative_to(ROOT)}")
+            errors.append(f"symlink in plugin payload (Codex ignores symlinks): {path.relative_to(root)}")
             continue
         if not path.is_file() or path.suffix not in {".md", ".yaml", ".py", ".sh"}:
             continue
         text = path.read_text(encoding="utf-8")
         for pattern in LEGACY_PATTERNS:
             for match in pattern.finditer(text):
-                errors.append(f"legacy reference in {path.relative_to(ROOT)}: {match.group(0)}")
+                errors.append(f"legacy reference in {path.relative_to(root)}: {match.group(0)}")
         for term in RETIRED_TERMS:
             if term in text:
-                errors.append(f"retired process term in {path.relative_to(ROOT)}: {term}")
+                errors.append(f"retired process term in {path.relative_to(root)}: {term}")
         if path.suffix == ".md":
-            check_markdown_links(path, errors, text=text)
+            check_markdown_links(path, errors, text=text, root=root)
 
 
-def check_repo_docs(errors: list[str]) -> None:
+def check_repo_docs(errors: list[str], root: Path = ROOT) -> None:
     for rel in REQUIRED_REPO_DOCS:
-        doc_path = ROOT / rel
+        doc_path = root / rel
         if not doc_path.is_file():
             errors.append(f"missing repo doc: {rel}")
         else:
-            check_markdown_links(doc_path, errors)
-    docs_dir = ROOT / "docs"
+            check_markdown_links(doc_path, errors, root=root)
+    docs_dir = root / "docs"
     if docs_dir.is_dir():
         for doc_path in sorted(docs_dir.rglob("*.md")):
-            check_markdown_links(doc_path, errors)
+            check_markdown_links(doc_path, errors, root=root)
+        adr_dir = docs_dir / "adr"
+        if adr_dir.is_dir():
+            for adr_path in sorted(adr_dir.glob("*.md")):
+                first_line = next(
+                    (line for line in adr_path.read_text(encoding="utf-8").splitlines() if line.strip()),
+                    "",
+                )
+                if not first_line.startswith("# "):
+                    errors.append(f"ADR must start with '# ' heading: {adr_path.relative_to(root)}")
     for rel in SKILL_DOC_FILES:
-        doc_path = ROOT / rel
+        doc_path = root / rel
         if not doc_path.is_file():
             continue
         text = doc_path.read_text(encoding="utf-8")
@@ -475,48 +526,51 @@ def check_repo_docs(errors: list[str]) -> None:
             errors.append(f"{rel} is missing expected skills: {missing}")
 
 
-def check_no_hooks(errors: list[str]) -> None:
+def check_no_hooks(errors: list[str], root: Path = ROOT) -> None:
     """项目硬性规定：插件任何功能都不得用事件钩子实现。"""
-    if (PLUGIN / "hooks").exists():
+    plugin, skills = _plugin_paths(root)
+    if (plugin / "hooks").exists():
         errors.append("plugin must not contain hooks/: implement behaviour with skills")
-    if (PLUGIN / "rules").exists():
+    if (plugin / "rules").exists():
         errors.append("plugin must not contain rules/: use the letsgo skill across all three hosts")
-    for path in PLUGIN.rglob("*.json"):
+    for path in plugin.rglob("*.json"):
         if path.name.startswith("hooks") or path.name.endswith("hooks.json"):
-            errors.append(f"plugin must not ship hook configuration: {path.relative_to(ROOT)}")
+            errors.append(f"plugin must not ship hook configuration: {path.relative_to(root)}")
     for manifest in (
-        PLUGIN / ".claude-plugin" / "plugin.json",
-        PLUGIN / ".codex-plugin" / "plugin.json",
-        PLUGIN / ".antigravity-plugin" / "plugin.json",
+        plugin / ".claude-plugin" / "plugin.json",
+        plugin / ".codex-plugin" / "plugin.json",
+        plugin / ".antigravity-plugin" / "plugin.json",
     ):
         if "hooks" in load_json(manifest, errors):
-            errors.append(f"{manifest.relative_to(ROOT)} must not declare hooks")
-    for skill_md in SKILLS.glob("*/SKILL.md"):
+            errors.append(f"{manifest.relative_to(root)} must not declare hooks")
+    for skill_md in skills.glob("*/SKILL.md"):
         if "hooks" in frontmatter(skill_md):
-            errors.append(f"{skill_md.relative_to(ROOT)} must not declare hooks")
+            errors.append(f"{skill_md.relative_to(root)} must not declare hooks")
 
 
-def check_private_payload(errors: list[str]) -> None:
+def check_private_payload(errors: list[str], root: Path = ROOT) -> None:
+    plugin, _ = _plugin_paths(root)
     forbidden = (
         "/Users/", "~/.agents/generated", "~/project/letsgo-skills", "本机快照", "候选快照",
         "generated/backups", "generated/tmp", "~/data/", "letsgo:setup",
     )
-    for path in PLUGIN.rglob("*"):
+    for path in plugin.rglob("*"):
         if path.name in {".DS_Store", "__pycache__"} or path.suffix == ".pyc":
-            errors.append(f"unwanted file in plugin payload: {path.relative_to(ROOT)}")
+            errors.append(f"unwanted file in plugin payload: {path.relative_to(root)}")
             continue
         if not path.is_file() or path.suffix not in {".md", ".sh", ".py", ".json", ".yaml"}:
             continue
         content = path.read_text(encoding="utf-8")
         for needle in forbidden:
             if needle in content:
-                errors.append(f"private or retired runtime reference in {path.relative_to(ROOT)}")
+                errors.append(f"private or retired runtime reference in {path.relative_to(root)}")
                 break
 
 
-def check_governance_docs(errors: list[str]) -> None:
+def check_governance_docs(errors: list[str], root: Path = ROOT) -> None:
     version: str | None = None
-    claude_path = PLUGIN / ".claude-plugin" / "plugin.json"
+    plugin, _ = _plugin_paths(root)
+    claude_path = plugin / ".claude-plugin" / "plugin.json"
     if claude_path.is_file():
         try:
             raw_version = json.loads(claude_path.read_text(encoding="utf-8")).get("version")
@@ -524,18 +578,24 @@ def check_governance_docs(errors: list[str]) -> None:
             raw_version = None
         if isinstance(raw_version, str) and BARE_VERSION.match(raw_version):
             version = raw_version
-    errors.extend(changelog_guard.validate_governance_docs(ROOT, version))
+    errors.extend(changelog_guard.validate_governance_docs(root, version))
 
 
-def main() -> int:
+def validate_repo(root: Path = ROOT) -> list[str]:
+    """Run all structural and governance checks against the given repository root."""
     errors: list[str] = []
-    check_manifests(errors)
-    check_skills(errors)
-    check_text(errors)
-    check_no_hooks(errors)
-    check_private_payload(errors)
-    check_governance_docs(errors)
-    check_repo_docs(errors)
+    check_manifests(errors, root)
+    check_skills(errors, root)
+    check_text(errors, root)
+    check_no_hooks(errors, root)
+    check_private_payload(errors, root)
+    check_governance_docs(errors, root)
+    check_repo_docs(errors, root)
+    return errors
+
+
+def main(root: Path = ROOT) -> int:
+    errors = validate_repo(root)
     if errors:
         print("\n".join(f"ERROR: {e}" for e in errors))
         return 1

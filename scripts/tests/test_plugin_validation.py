@@ -37,15 +37,18 @@ class PluginValidationTests(unittest.TestCase):
         for name in ("GLOSSARY.md", "README.md", "AGENTS.md", "CHANGELOG.md"):
             shutil.copy2(ROOT / name, self.fixture / name)
 
-    def validate(self) -> subprocess.CompletedProcess[str]:
+    def run_validation(self) -> list[str]:
+        return validate.validate_repo(self.fixture)
+
+    def run_cli_validate(self) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, "scripts/validate.py"], cwd=self.fixture, text=True, capture_output=True, check=False
         )
 
     def assertRejected(self, message: str) -> None:
-        result = self.validate()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn(message, result.stdout)
+        errors = self.run_validation()
+        self.assertTrue(errors, f"expected validation error containing {message!r}, but passed")
+        self.assertIn(message, "\n".join(errors))
 
     def edit(self, relative: str, old: str, new: str) -> None:
         path = self.fixture / relative
@@ -53,13 +56,28 @@ class PluginValidationTests(unittest.TestCase):
         self.assertIn(old, text)
         path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
+    def replace_all(self, relative: str, old: str, new: str) -> None:
+        path = self.fixture / relative
+        text = path.read_text(encoding="utf-8")
+        self.assertIn(old, text)
+        path.write_text(text.replace(old, new), encoding="utf-8")
+
     def append(self, relative: str, text: str) -> None:
         with (self.fixture / relative).open("a", encoding="utf-8") as stream:
             stream.write(text)
 
     def test_valid_plugin_passes(self) -> None:
-        result = self.validate()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.run_validation(), [])
+
+    def test_cli_entrypoint_reports_ok_and_errors(self) -> None:
+        ok_res = self.run_cli_validate()
+        self.assertEqual(ok_res.returncode, 0, ok_res.stdout + ok_res.stderr)
+        self.assertEqual(ok_res.stdout.strip(), "VALIDATION_OK")
+
+        self.append(f"{SKILLS}/letsgo/SKILL.md", "\n[缺失](references/missing.md)\n")
+        err_res = self.run_cli_validate()
+        self.assertNotEqual(err_res.returncode, 0)
+        self.assertIn("ERROR: broken link", err_res.stdout)
 
     def test_unexpected_skill_is_rejected(self) -> None:
         shutil.copytree(self.fixture / SKILLS / "stepping-doit", self.fixture / SKILLS / "tell-me")
@@ -90,11 +108,11 @@ class PluginValidationTests(unittest.TestCase):
         self.assertRejected("nested discoverable metadata")
 
     def test_stepping_must_link_workflow(self) -> None:
-        self.edit(f"{SKILLS}/stepping-begin/SKILL.md", "(../letsgo/references/stepping/workflow.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/stepping-begin/SKILL.md", "(../letsgo/references/stepping/workflow.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("missing route ../letsgo/references/stepping/workflow.md")
 
     def test_article_skill_must_link_language(self) -> None:
-        self.edit(f"{SKILLS}/write-an-article/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/write-an-article/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("write-an-article: missing route ../letsgo/references/language.md")
 
     def test_article_skill_must_be_explicit(self) -> None:
@@ -102,15 +120,15 @@ class PluginValidationTests(unittest.TestCase):
         self.assertRejected("write-an-article: must be explicit-only")
 
     def test_matt_flow_skill_must_link_matt_route(self) -> None:
-        self.edit(f"{SKILLS}/matt-flow/SKILL.md", "(../letsgo/references/matt-route.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/matt-flow/SKILL.md", "(../letsgo/references/matt-route.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("matt-flow: missing route ../letsgo/references/matt-route.md")
 
     def test_matt_flow_skill_must_link_orchestration(self) -> None:
-        self.edit(f"{SKILLS}/matt-flow/SKILL.md", "(../letsgo/references/orchestration.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/matt-flow/SKILL.md", "(../letsgo/references/orchestration.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("matt-flow: missing route ../letsgo/references/orchestration.md")
 
     def test_prove_it_skill_must_link_language(self) -> None:
-        self.edit(f"{SKILLS}/prove-it/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/prove-it/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("prove-it: missing route ../letsgo/references/language.md")
 
     def test_prove_it_skill_must_be_explicit(self) -> None:
@@ -118,7 +136,7 @@ class PluginValidationTests(unittest.TestCase):
         self.assertRejected("prove-it: must be explicit-only")
 
     def test_guide_skill_must_link_language(self) -> None:
-        self.edit(f"{SKILLS}/guide/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/guide/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("guide: missing route ../letsgo/references/language.md")
 
     def test_guide_skill_must_be_explicit(self) -> None:
@@ -126,11 +144,11 @@ class PluginValidationTests(unittest.TestCase):
         self.assertRejected("guide: must be explicit-only")
 
     def test_try_swarm_skill_must_link_language(self) -> None:
-        self.edit(f"{SKILLS}/try-swarm/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/try-swarm/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("try-swarm: missing route ../letsgo/references/language.md")
 
     def test_try_swarm_skill_must_link_orchestration(self) -> None:
-        self.edit(f"{SKILLS}/try-swarm/SKILL.md", "(../letsgo/references/orchestration.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/try-swarm/SKILL.md", "(../letsgo/references/orchestration.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("try-swarm: missing route ../letsgo/references/orchestration.md")
 
     def test_try_swarm_skill_must_be_explicit(self) -> None:
@@ -138,7 +156,7 @@ class PluginValidationTests(unittest.TestCase):
         self.assertRejected("try-swarm: must be explicit-only")
 
     def test_git_wrap_skill_must_link_language(self) -> None:
-        self.edit(f"{SKILLS}/git-wrap/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
+        self.replace_all(f"{SKILLS}/git-wrap/SKILL.md", "(../letsgo/references/language.md)", "(../letsgo/SKILL.md)")
         self.assertRejected("git-wrap: missing route ../letsgo/references/language.md")
 
     def test_git_wrap_skill_must_be_explicit(self) -> None:
@@ -181,10 +199,9 @@ class PluginValidationTests(unittest.TestCase):
         data["hooks"] = "./hooks.json"
         manifest.write_text(json.dumps(data), encoding="utf-8")
         self.edit(f"{SKILLS}/stepping-doit/SKILL.md", "---\n", "---\nhooks: {}\n")
-        result = self.validate()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("plugin.json must not declare hooks", result.stdout)
-        self.assertIn("SKILL.md must not declare hooks", result.stdout)
+        errors = "\n".join(self.run_validation())
+        self.assertIn("plugin.json must not declare hooks", errors)
+        self.assertIn("SKILL.md must not declare hooks", errors)
 
     def test_system_metadata_cannot_enter_plugin_payload(self) -> None:
         (self.fixture / SKILLS / "letsgo/.DS_Store").write_bytes(b"junk")
@@ -196,10 +213,9 @@ class PluginValidationTests(unittest.TestCase):
         data["version"] = "9.9.9"
         data["skills"] = "./skills/"
         manifest.write_text(json.dumps(data), encoding="utf-8")
-        result = self.validate()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("plugin versions differ", result.stdout)
-        self.assertIn("unsupported fields", result.stdout)
+        errors = "\n".join(self.run_validation())
+        self.assertIn("plugin versions differ", errors)
+        self.assertIn("unsupported fields", errors)
 
     def test_codex_manifest_must_read_skills(self) -> None:
         self.edit("plugins/letsgo/.codex-plugin/plugin.json", '"./skills/"', '"./skills-codex/"')
@@ -276,8 +292,7 @@ class PluginValidationTests(unittest.TestCase):
             f"## [{version}]\n"
             "~~~\n",
         )
-        result = self.validate()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.run_validation(), [])
 
     def test_changelog_fenced_version_heading_does_not_satisfy_required_version(self) -> None:
         version = json.loads(
@@ -324,8 +339,7 @@ class PluginValidationTests(unittest.TestCase):
         )
         self.append("README.md", snippet)
         self.append("docs/authoring.md", snippet)
-        result = self.validate()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.run_validation(), [])
 
     def test_missing_required_repo_doc_is_rejected(self) -> None:
         for rel in ("AGENTS.md", "GLOSSARY.md"):
@@ -347,10 +361,9 @@ class PluginValidationTests(unittest.TestCase):
                 self.assertNotEqual(updated, original)
                 try:
                     path.write_text(updated, encoding="utf-8")
-                    result = self.validate()
-                    self.assertNotEqual(result.returncode, 0)
-                    self.assertIn(f"{rel} is missing expected skills:", result.stdout)
-                    self.assertIn("'guide'", result.stdout)
+                    errors = "\n".join(self.run_validation())
+                    self.assertIn(f"{rel} is missing expected skills:", errors)
+                    self.assertIn("'guide'", errors)
                 finally:
                     path.write_text(original, encoding="utf-8")
 
@@ -363,6 +376,25 @@ class PluginValidationTests(unittest.TestCase):
         self.assertIn("/letsgo:guide", updated)
         path.write_text(updated, encoding="utf-8")
         self.assertRejected("GLOSSARY.md is missing expected skills: ['letsgo']")
+
+    def test_adr_must_start_with_h1_heading(self) -> None:
+        adr = self.fixture / "docs/adr/0020-matt-flow-skill.md"
+        original = adr.read_text(encoding="utf-8")
+        adr.write_text(f"> 状态：前置注记。\n\n{original}", encoding="utf-8")
+        self.assertRejected("ADR must start with '# ' heading: docs/adr/0020-matt-flow-skill.md")
+
+    def test_orphan_reference_doc_is_rejected(self) -> None:
+        orphan = self.fixture / SKILLS / "letsgo/references/orphan.md"
+        orphan.write_text("# 孤儿规则\n\n未被引用的内容。\n", encoding="utf-8")
+        self.assertRejected(f"orphan reference doc (unreachable from any SKILL.md): {SKILLS}/letsgo/references/orphan.md")
+
+    def test_mutually_linked_unreachable_references_are_rejected(self) -> None:
+        refs = self.fixture / SKILLS / "letsgo/references"
+        (refs / "island-a.md").write_text("# 孤岛 A\n\n参见 [B](island-b.md)。\n", encoding="utf-8")
+        (refs / "island-b.md").write_text("# 孤岛 B\n\n参见 [A](island-a.md)。\n", encoding="utf-8")
+        errors = "\n".join(self.run_validation())
+        self.assertIn(f"orphan reference doc (unreachable from any SKILL.md): {SKILLS}/letsgo/references/island-a.md", errors)
+        self.assertIn(f"orphan reference doc (unreachable from any SKILL.md): {SKILLS}/letsgo/references/island-b.md", errors)
 
 
 class SimpleYamlParserTests(unittest.TestCase):
